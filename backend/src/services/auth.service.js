@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const { env } = require('../config/env');
 const { User } = require('../models');
 const { ApiError } = require('../utils/ApiError');
+const { getCurrentUser } = require('./users.service');
 
 // 10 rounds is the usual balance: slow enough to make brute force expensive,
 // fast enough (~100ms) not to be felt on login.
@@ -24,8 +25,9 @@ const register = async ({ email, password, name, role }) => {
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
   const user = await User.create({ email, passwordHash, name, role });
 
-  // user is serialized through User.prototype.toJSON, so no hash reaches the client.
-  return { token: signToken(user), user };
+  // Re-read in the CurrentUser shape so register, login and /auth/me all return
+  // exactly the same object (email, rating, reviewsCount, no hash).
+  return { token: signToken(user), user: await getCurrentUser(user.id) };
 };
 
 const login = async ({ email, password }) => {
@@ -41,7 +43,7 @@ const login = async ({ email, password }) => {
   // Checked after the password so a blocked user learns nothing by guessing.
   if (user.isBlocked) throw ApiError.forbidden('Your account has been blocked');
 
-  return { token: signToken(user), user };
+  return { token: signToken(user), user: await getCurrentUser(user.id) };
 };
 
 module.exports = { register, login };

@@ -1,1 +1,10 @@
-// Joi schema: create (rating 1-5, comment max 500). targetId is never accepted from the client.
+const Joi = require('joi');
+
+// targetId is deliberately not accepted: the server derives it from the order,
+// so nobody can post a review about an arbitrary user.
+const createReviewSchema = Joi.object({
+  rating: Joi.number().integer().min(1).max(5).required(),
+  comment: Joi.string().trim().max(500).allow('', null),
+});
+
+module.exports = { createReviewSchema };

@@ -1,129 +1,117 @@
-# Development Plan (18 days + 2 buffer)
+# Development Plan
 
 Agreed scope: a freelance marketplace where a client posts an order, freelancers
 send proposals, the client picks one, and both sides review each other after the
-work is done.
+work is done. The project is a portfolio piece for a **frontend interview**, so
+the frontend is what gets evaluated.
 
-## Working rule: vertical slices
+## Status (2026-10-23)
 
-Never "the whole backend first, then the whole frontend". Each day closes one
-feature end to end: table → service → route → screen → manual check in the
-browser → commit. That way there is a working demo on any given day.
+**Backend: complete.** Every endpoint in `docs/API.md` is implemented, documented
+in Swagger (`http://localhost:4000/api/docs`) and checked end to end, including
+the negative cases: second proposal, someone else's order, skipped status,
+review on an unfinished order, someone else's chat, blocked user with a live
+token, two concurrent accepts on one order. `npm run seed -- --fresh` gives demo
+data for every screen.
 
-Branches: `main` always runs, features live in `feat/orders`-style branches and
-are merged at the end of the day. Small commits, written in English.
+**Frontend: started.** Types in `frontend/src/types/` match the contract; the
+rest of `frontend/src` is placeholders.
 
-Division of labor for this project: the backend is built for you; you write the
-frontend on top of `docs/API.md`.
+The original plan alternated backend and frontend day by day. With the backend
+done, the whole remaining budget goes to the frontend.
 
-## Stage 1 — Foundation (days 1-4)
+## Working rules
 
-**Day 1. Backend skeleton and database.** Dependencies, `.env`, local Postgres,
-all six models and associations, `sequelize.sync({ alter: true })` on startup,
-`seed.js` with categories and demo users.
-*Done when:* `npm run seed` finishes and the tables contain data.
+- One screen at a time, end to end: hook → page → loading / empty / error states
+  → manual check with a demo account → commit.
+- Branches: `main` always runs, features live in `feat/orders`-style branches.
+  Small commits, written in English.
+- When the UI needs something the API does not give, ask for an endpoint change
+  instead of working around it — the contract, Swagger and the types are updated
+  together.
 
-**Day 2. Authentication.** `register` / `login` / `me`, bcrypt, JWT. Middleware:
-`auth`, `requireRole`, `validate`, `errorHandler`. Joi schemas for auth.
-*Done when:* all three endpoints work in Postman and a bad token returns 401,
-and `passwordHash` appears in no response.
+## Stage 1 — Foundation
 
-**Day 3. Frontend skeleton.** Vite + TypeScript, routing, axios instance with interceptors
-(attach token, log out on 401), Zustand auth store persisted to localStorage,
-`ProtectedRoute`, Login and Register pages, `QueryClientProvider`.
-*Done when:* the register form actually creates a user in the database.
+**Skeleton.** `api/client.ts` (axios, token interceptor, logout on 401 — not on
+403), `store/auth.ts` (Zustand + persist), `QueryClientProvider`, router,
+`ProtectedRoute`, Login and Register pages. On start, call `/auth/me` once and
+show a spinner until it answers, so a reload does not flash the login page.
 
-**Day 4. Navigation and end-to-end check.** Role-aware navbar, redirects, base
-styles. **Decide now: CSS modules or Tailwind — and do not change it later.**
-*Checkpoint 1:* register → login → reload the page → still logged in.
+**Navigation and styles.** Role-aware navbar, layout, base UI kit (`Button`,
+`Input`, `Select`, `Spinner`, `ErrorMessage`, `EmptyState`).
+**Decide now: CSS modules or Tailwind — and do not change it later.**
 
-## Stage 2 — Core scenario (days 5-10)
+*Checkpoint 1:* register → login → reload → still logged in; log in as
+`blocked@freelancehub.dev` → a readable "account blocked" message.
 
-This is the heart of the project and what gets examined at the defense. Spend the
-most effort here.
+## Stage 2 — Core scenario
 
-**Day 5. Orders: backend.** `POST /orders` (CLIENT only), `GET /orders` (no
-filters yet), `GET /orders/:id` with client and category included,
-`PATCH /orders/:id` with owner and `OPEN`-status checks.
+This is the heart of the demo. Spend the most effort here.
 
-**Day 6. Orders: frontend.** `useOrders` hook, Orders / OrderDetails /
-CreateOrder pages, `OrderCard`. Loading / empty / error states on every list from
-the start, not later.
+**Orders list.** `useOrders` with TanStack Query, `OrderCard`, `StatusBadge`,
+`Pagination`. Filters (category, status, budget, search) live in the URL via
+`useSearchParams`, so a filtered list can be shared as a link — this demos well.
+Loading / empty / error states from the start, not later.
 
-**Day 7. Search, filters, pagination.** Backend: `categoryId`, `minBudget`,
-`maxBudget`, `status`, `search` (`Op.iLike` on title), `page`. Frontend: filter
-state lives in the URL via `useSearchParams`, not `useState` — then a filtered
-list can be shared as a link, which demos well.
+**Order page and forms.** `OrderDetails`, `CreateOrder`, `EditOrder` (author
+only, `OPEN` only — hide the button otherwise). Show field errors from the
+server's `details[]`.
 
-**Day 8. Proposals.** `POST /orders/:id/proposals` with every check: FREELANCER
-only, `OPEN` only, not your own order, not twice (catch the unique violation and
-return a readable 409). `GET /orders/:id/proposals` for the order owner only.
-Frontend: proposal form and the proposal list for the client.
+**Proposals.** `ProposalForm` for freelancers (hide it when
+`GET /proposals/my?orderId=` says you already applied), the proposal list for
+the client with new ones highlighted, the unseen counter in the navbar.
 
-**Day 9. Choosing a freelancer — the transaction.** `POST /proposals/:id/accept`:
-in one `sequelize.transaction`, the chosen proposal becomes `ACCEPTED`, the rest
-become `REJECTED`, and the order moves to `IN_PROGRESS` with `freelancerId` set.
-This is the key piece of code in the project and the one you will be asked about
-— write it carefully and comment it.
+**Accepting and statuses.** "Choose freelancer" with a confirmation modal;
+after it succeeds, invalidate the order and the proposal list. `OrderActions`:
+one button derived from role + current status (see the transition table in
+`docs/API.md`).
 
-**Day 10. Order statuses.** `PATCH /orders/:id/status` with a strict transition
-check. Keep the allowed transitions in one map in the service, not in `if`
-chains. Frontend: one action button derived from role + current status.
-*Checkpoint 2:* the full flow in the browser with two users — client creates an
-order → freelancer sends a proposal → client accepts → freelancer sends it to
-review → client completes it. **If this does not work by the end of day 10, stop
-and finish it before moving on.**
+*Checkpoint 2:* the full flow in two browsers (or a normal and a private
+window) — Karen creates an order → Anna sends a proposal → Karen accepts → Anna
+sends it to review → Karen completes it. **If this does not work, stop and finish
+it before moving on.**
 
-## Stage 3 — Remaining features (days 11-15)
+## Stage 3 — Remaining features
 
-**Day 11. Freelancer profiles.** `GET /freelancers` with the rating aggregate,
-`GET /freelancers/:id`, `PATCH /freelancers/me`. Freelancers and
-FreelancerProfile pages.
+**Freelancers.** Directory with skill / rate filters and sorting, public profile
+with reviews, `MyProfile` edit form.
 
-**Day 12. Reviews.** `POST /orders/:id/review` — `COMPLETED` only, participants
-only, once. `StarRating` component, reviews on the profile page.
+**Reviews.** `StarRating` (read-only and input), `ReviewForm` shown only when the
+order is `COMPLETED`, you are a participant and have not reviewed yet.
 
-**Day 13. Messages.** `GET`/`POST /orders/:id/messages`, access limited to the
-client and the assigned freelancer. Frontend: `refetchInterval: 5000` in TanStack
-Query. Write in the README that polling is a deliberate MVP choice and sockets
-are future work.
+**Chat.** `MessageList` + `MessageInput`, `refetchInterval: 5000`, own messages
+on one side, auto-scroll to the bottom. Polling is a deliberate MVP choice;
+sockets are future work.
 
-**Day 14. Dashboard.** `GET /dashboard`: my orders, my proposals, unseen-proposal
-counter. Different view per role.
+**Dashboard.** Three views switched on `role`, with the counters and recent /
+active orders.
 
-**Day 15. Admin panel.** Categories (CRUD) and users (list, block/unblock).
-No frills — a table and buttons.
+**Admin.** Users table with block / unblock, categories with create / rename /
+delete (disable delete when `ordersCount > 0`).
 
-## Stage 4 — Hardening and delivery (days 16-20)
+## Stage 4 — Polish and delivery
 
-**Day 16. Validation and errors.** Walk every route: is Joi applied, is ownership
-checked, does every error go through `errorHandler`. 403/404 pages. Verify the
-frontend shows the server message, not a generic "Something went wrong".
+**States and errors.** Walk every screen: loading, empty, error, 403 and 404
+pages, disabled buttons while a mutation runs, the server's message instead of
+"Something went wrong".
 
-**Day 17. Deployment.** Render (backend + Postgres), Vercel (frontend). Budget a
-full day — CORS, environment variables and `sslmode` always eat more time than
-expected. Run the seed against the production database.
+**Responsive layout and accessibility.** Phone width, keyboard navigation,
+labels on inputs, focus management in modals.
 
-**Day 18. Testing and bug fixing.** Walk 10-12 scenarios by hand, including the
-negative ones: a second proposal, a review on an unfinished order, editing
-someone else's order, skipping a status, reading someone else's chat. Each
-attempt must produce a readable error — that is exactly what the spec promises.
+**Deployment.** Neon (Postgres) + Render (backend) + Vercel (frontend). Budget a
+full day — CORS, environment variables and SSL always take longer than expected.
+Run the seed against the production database.
 
-**Day 19. README and materials.** Description, stack, database schema, endpoint
-table, screenshots, setup instructions, a "Future work" section (sequelize-cli
-migrations, sockets, payments, email, file uploads).
+**README.** Description, stack, screenshots, setup, demo accounts, "Future work"
+(migrations, sockets, payments, email, file uploads, tests).
 
-**Day 20. Presentation and buffer.** Demo accounts with meaningful data (not
-"test1 / test2"), a timed rehearsal of the demo, and room for whatever breaks.
+**Rehearsal.** A timed walk through the demo flow with the seed accounts.
 
 ## What to cut if you fall behind
 
-Being 2-3 days behind is almost inevitable. Decide the order of sacrifice now:
-
-1. Messages (day 13) — most expensive, least essential.
+1. Chat.
 2. Admin user management — keep categories only.
-3. Pagination — replace with `limit: 50`.
+3. Freelancer directory filters — keep the plain list.
 
-**Never cut:** the accept-proposal transaction, the status chain, the uniqueness
-of proposals and reviews. Those are the "the system does not allow incorrect
-actions" part the project exists to demonstrate.
+**Never cut:** the order flow from Checkpoint 2, the loading / empty / error
+states, and the readable error messages. That is what the interview will look at.

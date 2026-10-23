@@ -1,21 +1,38 @@
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
+const swaggerUi = require('swagger-ui-express');
 const { env } = require('./config/env');
+const { openapiSpec } = require('./config/openapi');
 const routes = require('./routes');
 const { errorHandler } = require('./middleware/errorHandler');
 const { ApiError } = require('./utils/ApiError');
 
 const app = express();
 
+// Browsers send the literal string "null" as the Origin of file:// pages and
+// sandboxed frames, which is not a parseable URL.
+const isSameHost = (origin, host) => {
+  try {
+    return new URL(origin).host === host;
+  } catch {
+    return false;
+  }
+};
+
 app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Requests without an Origin header (curl, Postman, server-to-server) are
-      // allowed: CORS protects browsers, and those tools send no origin at all.
-      if (!origin || env.clientUrls.includes(origin)) return callback(null, true);
-      callback(ApiError.forbidden(`Origin ${origin} is not allowed by CORS`));
-    },
+  // The per-request form of cors() is used because the decision needs the
+  // request itself, not only its Origin header.
+  cors((req, callback) => {
+    const origin = req.header('Origin');
+    // Allowed without an Origin header (curl, Postman, server-to-server): CORS
+    // protects browsers, and those tools send no origin at all.
+    // Allowed from this server's own host: Swagger UI at /api/docs is served
+    // from here, and browsers attach an Origin header to its POST requests too.
+    if (!origin || env.clientUrls.includes(origin) || isSameHost(origin, req.get('host'))) {
+      return callback(null, { origin: true });
+    }
+    callback(ApiError.forbidden(`Origin ${origin} is not allowed by CORS`));
   }),
 );
 
@@ -29,6 +46,18 @@ app.use(morgan(env.isProduction ? 'combined' : 'dev'));
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', env: env.nodeEnv, time: new Date().toISOString() });
 });
+
+// Interactive API reference. persistAuthorization keeps the pasted token across
+// page reloads, so you do not have to log in again after every refresh.
+app.get('/api/openapi.json', (req, res) => res.json(openapiSpec));
+app.use(
+  '/api/docs',
+  swaggerUi.serve,
+  swaggerUi.setup(openapiSpec, {
+    customSiteTitle: 'FreelanceHub API',
+    swaggerOptions: { persistAuthorization: true, displayRequestDuration: true },
+  }),
+);
 
 app.use('/api', routes);
 

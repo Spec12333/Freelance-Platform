@@ -1,0 +1,1252 @@
+openapi: 3.0.3
+
+info:
+  title: FreelanceHub API
+  version: 1.0.0
+  description: |
+    Freelance marketplace: a client posts an order, freelancers send proposals,
+    the client accepts one, both sides review each other when the work is done.
+
+    ## How to try it here
+
+    1. Open **Auth → POST /auth/login**, press *Try it out* and log in with a demo account.
+    2. Copy `token` from the response.
+    3. Press **Authorize** (top right) and paste the token — without the `Bearer ` prefix.
+       The token is remembered across page reloads.
+
+    | Role | Email | Password |
+    |---|---|---|
+    | ADMIN | `admin@freelancehub.dev` | `admin123` |
+    | CLIENT | `client@freelancehub.dev` | `client123` |
+    | CLIENT | `lilit@freelancehub.dev` | `lilit123` |
+    | FREELANCER | `anna@freelancehub.dev` | `anna123` |
+    | FREELANCER | `davit@freelancehub.dev` | `davit123` |
+    | FREELANCER | `mariam@freelancehub.dev` | `mariam123` |
+    | FREELANCER (blocked) | `blocked@freelancehub.dev` | `blocked123` |
+
+    Reset the data at any time with `npm run seed -- --fresh` in `backend/`.
+
+    ## Conventions
+
+    - Lists return `{ items, total, page, pages }` and accept `page` (default 1)
+      and `limit` (default 10, max 50). Exceptions, returned as plain arrays:
+      `GET /categories`, `GET /orders/{id}/proposals`, `GET /orders/{id}/reviews`.
+    - Every error is `{ message }`; validation errors add `details[]`.
+    - `400` validation · `401` no/invalid/expired token · `403` wrong role, not
+      yours, or blocked account · `404` not found · `409` a business rule refused it.
+    - Money is an integer in whole currency units. Dates are ISO 8601 strings in UTC.
+    - A user nested in another object never carries an email.
+
+servers:
+  - url: /api
+
+tags:
+  - name: Auth
+  - name: Categories
+  - name: Orders
+    description: Orders and the status flow.
+  - name: Proposals
+  - name: Messages
+    description: Order chat between the client and the assigned freelancer.
+  - name: Reviews
+  - name: Freelancers
+    description: Public profiles and the freelancer directory.
+  - name: Dashboard
+  - name: Admin
+    description: Everything here requires role `ADMIN`.
+
+paths:
+  # --- Auth ------------------------------------------------------------------
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Create an account
+      description: '`ADMIN` cannot be registered — the admin comes from the seed. The email is lowercased.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterBody' }
+      responses:
+        '201':
+          description: Registered and logged in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409':
+          description: The email is already registered
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { message: This email is already registered }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Log in
+      description: An unknown email and a wrong password return the same 401 on purpose.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginBody' }
+      responses:
+        '200':
+          description: Logged in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401':
+          description: Wrong email or password
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { message: Invalid email or password }
+        '403':
+          description: The account is blocked
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { message: Your account has been blocked }
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: The current user
+      description: Call it on app start to check that a stored token is still valid.
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: The owner of the token
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CurrentUser' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  # --- Categories ------------------------------------------------------------
+  /categories:
+    get:
+      tags: [Categories]
+      summary: All categories
+      description: Plain array sorted by name, not paginated — it feeds the filter dropdown.
+      responses:
+        '200':
+          description: Categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Category' }
+
+  # --- Orders ----------------------------------------------------------------
+  /orders:
+    get:
+      tags: [Orders]
+      summary: List orders
+      description: Public. Newest first. Every filter is optional and they combine with AND.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - { name: categoryId, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/OrderStatus' } }
+        - { name: minBudget, in: query, schema: { type: integer, minimum: 0 } }
+        - name: maxBudget
+          in: query
+          description: Must be ≥ `minBudget` when both are given.
+          schema: { type: integer, minimum: 0 }
+        - name: search
+          in: query
+          description: Case-insensitive substring of the title.
+          schema: { type: string, maxLength: 100 }
+        - name: clientId
+          in: query
+          description: Orders created by this user — "my orders" for a client.
+          schema: { type: integer, minimum: 1 }
+        - name: freelancerId
+          in: query
+          description: Orders assigned to this user — "my work" for a freelancer.
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '200':
+          description: A page of orders
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderPage' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+    post:
+      tags: [Orders]
+      summary: Create an order
+      description: Role `CLIENT`. The order starts as `OPEN`.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateOrderBody' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '400':
+          description: Validation failed, or the category does not exist
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /orders/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Orders]
+      summary: One order
+      responses:
+        '200':
+          description: The order
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Orders]
+      summary: Edit an order
+      description: |
+        Role `CLIENT`, the author only, and only while the order is `OPEN`.
+        Any subset of the create fields; `deadline: null` removes the deadline.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateOrderBody' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: The order is no longer OPEN
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { message: 'Order can only be edited while it is OPEN (current status: IN_PROGRESS)' }
+
+  /orders/{id}/status:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    patch:
+      tags: [Orders]
+      summary: Move an order to the next status
+      description: |
+        | From | To | Who |
+        |---|---|---|
+        | `IN_PROGRESS` | `REVIEW` | the assigned freelancer |
+        | `REVIEW` | `COMPLETED` | the order's client |
+        | `OPEN`, `IN_PROGRESS` | `CANCELLED` | the order's client |
+
+        `OPEN → IN_PROGRESS` is not available here — it happens only through
+        `POST /proposals/{id}/accept`. Cancelling an `OPEN` order rejects its
+        pending proposals.
+
+        - **403** — not a participant, or a legal move made by the wrong side
+        - **409** — not a legal move from the current status (`COMPLETED` and `CANCELLED` are final)
+
+        Try it: as `anna`, move order **10** to `REVIEW`; as `client`, move
+        order **5** (already in `REVIEW`) to `COMPLETED`.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StatusBody' }
+      responses:
+        '200':
+          description: Moved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403':
+          description: Not a participant, or the wrong side for this move
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { message: Only the order freelancer can move it to REVIEW }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Not a legal move from the current status
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              examples:
+                skip:
+                  value: { message: Cannot change status from OPEN to COMPLETED }
+                start:
+                  value: { message: An order moves to IN_PROGRESS only when a proposal is accepted }
+
+  # --- Proposals -------------------------------------------------------------
+  /orders/{id}/proposals:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Proposals]
+      summary: Proposals of an order
+      description: |
+        The order's client only — 403 for everyone else, including freelancers.
+        Plain array, oldest first.
+
+        **Side effect:** marks every proposal of the order as viewed. The
+        response still shows `viewedByClient` as it was *before* this call, so
+        the UI can highlight what is new on this visit. The dashboard's
+        `unseenProposals` counter drops accordingly.
+
+        Try it as `client`: order **1** has two unseen proposals.
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Proposals
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Proposal' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      tags: [Proposals]
+      summary: Send a proposal
+      description: |
+        Role `FREELANCER`. One proposal per freelancer per order.
+
+        - **409** — the order is not `OPEN`
+        - **409** — you have already sent a proposal for this order
+
+        Try it as `mariam` on order **2** or **3**.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateProposalBody' }
+      responses:
+        '201':
+          description: Sent
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Proposal' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Order not OPEN, or a proposal already sent
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { message: You have already sent a proposal for this order }
+
+  /proposals/my:
+    get:
+      tags: [Proposals]
+      summary: My proposals
+      description: |
+        Role `FREELANCER`. Newest first, each with a short summary of its order.
+        With `orderId` it answers "have I already applied to this order?" —
+        `total` is 0 or 1.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/ProposalStatus' } }
+        - { name: orderId, in: query, schema: { type: integer, minimum: 1 } }
+      responses:
+        '200':
+          description: A page of proposals
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProposalWithOrderPage' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /proposals/{id}/accept:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      tags: [Proposals]
+      summary: Accept a proposal
+      description: |
+        The order's client only. In one transaction: this proposal becomes
+        `ACCEPTED`, every other pending proposal of the order becomes `REJECTED`,
+        and the order becomes `IN_PROGRESS` with `freelancerId` set. Concurrent
+        accepts on the same order are serialized — only one can win.
+
+        - **409** — the order is no longer `OPEN`, or the proposal was already processed
+
+        Try it as `client`: proposal **2** is Anna's on order **1**.
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AcceptProposalResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Order not OPEN or proposal already processed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { message: 'Order is no longer OPEN (current status: IN_PROGRESS)' }
+
+  # --- Messages --------------------------------------------------------------
+  /orders/{id}/messages:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Messages]
+      summary: Chat history
+      description: |
+        The order's client and the assigned freelancer only — 403 for everyone
+        else, including freelancers whose proposals were rejected.
+
+        **Page 1 holds the most recent messages, and the items inside a page are
+        in chronological order.** Render a page as it comes (newest at the
+        bottom) and request page 2 for older history. Poll page 1 every few
+        seconds to receive new messages.
+
+        On an order without an assigned freelancer the list is simply empty.
+
+        Try it as `client` or `mariam` on order **4**.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: A page of messages
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MessagePage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      tags: [Messages]
+      summary: Send a message
+      description: Same two users. **409** while no freelancer is assigned yet.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateMessageBody' }
+      responses:
+        '201':
+          description: Sent
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Message' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: No freelancer assigned yet
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { message: The chat opens once a freelancer is assigned to the order }
+
+  # --- Reviews ---------------------------------------------------------------
+  /orders/{id}/review:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      tags: [Reviews]
+      summary: Review the other side of an order
+      description: |
+        The order's client or the assigned freelancer, once each. The person
+        being reviewed (`targetId`) is always the other side of the order and is
+        worked out by the server — it cannot be sent.
+
+        - **403** — not a participant
+        - **409** — the order is not `COMPLETED`
+        - **409** — you have already reviewed this order
+
+        Try it as `mariam` on order **13**: the client has reviewed her, she has not answered yet.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateReviewBody' }
+      responses:
+        '201':
+          description: Posted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Review' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Order not COMPLETED, or already reviewed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { message: You have already reviewed this order }
+
+  /orders/{id}/reviews:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Reviews]
+      summary: Reviews of an order
+      description: |
+        Public. Plain array with at most two reviews, one from each side. Use it
+        to decide whether to show the review form: hide it when one of them has
+        `authorId` equal to the current user.
+      responses:
+        '200':
+          description: Reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Review' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # --- Freelancers -----------------------------------------------------------
+  /freelancers:
+    get:
+      tags: [Freelancers]
+      summary: Freelancer directory
+      description: Public. Users with role `FREELANCER`; blocked accounts are excluded.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - { name: search, in: query, description: Case-insensitive substring of the name., schema: { type: string } }
+        - { name: skill, in: query, description: 'Exact skill, case-insensitive (e.g. `react`).', schema: { type: string } }
+        - { name: minRate, in: query, schema: { type: integer, minimum: 0 } }
+        - { name: maxRate, in: query, description: Must be ≥ `minRate` when both are given., schema: { type: integer, minimum: 0 } }
+        - name: sort
+          in: query
+          description: '`rating` — best first, unrated last (default). `rate` — cheapest first, no rate last.'
+          schema: { type: string, enum: [rating, rate], default: rating }
+      responses:
+        '200':
+          description: A page of freelancers
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserPage' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /freelancers/me:
+    patch:
+      tags: [Freelancers]
+      summary: Edit my profile
+      description: |
+        Role `FREELANCER`. Any subset of the fields, at least one. `null` or an
+        empty string clears a field. Skills are trimmed and lowercased.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateProfileBody' }
+      responses:
+        '200':
+          description: The updated profile
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CurrentUser' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /freelancers/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Freelancers]
+      summary: A public profile
+      description: Works for any user, clients included. Comes with the latest 5 reviews about them.
+      responses:
+        '200':
+          description: The profile
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PublicProfile' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /freelancers/{id}/reviews:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Freelancers]
+      summary: All reviews about a user
+      description: Public. Reviews where `targetId` is this user, newest first.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: A page of reviews
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReviewPage' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # --- Dashboard -------------------------------------------------------------
+  /dashboard:
+    get:
+      tags: [Dashboard]
+      summary: Summary for the current user
+      description: |
+        A different payload per role, tagged with `role` so the frontend can
+        tell them apart. Status count objects always contain every key, zeros included.
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: The dashboard for the caller's role
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ClientDashboard'
+                  - $ref: '#/components/schemas/FreelancerDashboard'
+                  - $ref: '#/components/schemas/AdminDashboard'
+                discriminator:
+                  propertyName: role
+                  mapping:
+                    CLIENT: '#/components/schemas/ClientDashboard'
+                    FREELANCER: '#/components/schemas/FreelancerDashboard'
+                    ADMIN: '#/components/schemas/AdminDashboard'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  # --- Admin -----------------------------------------------------------------
+  /admin/users:
+    get:
+      tags: [Admin]
+      summary: All users
+      description: Sorted by id. The admin sees emails.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - { name: role, in: query, schema: { $ref: '#/components/schemas/Role' } }
+        - { name: search, in: query, description: Substring of the name or the email., schema: { type: string } }
+        - { name: isBlocked, in: query, schema: { type: boolean } }
+      responses:
+        '200':
+          description: A page of users
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminUserPage' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/users/{id}/block:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    patch:
+      tags: [Admin]
+      summary: Block or unblock a user
+      description: |
+        Takes effect on the user's very next request: tokens they already hold
+        start returning 403 immediately. **409** when trying to block yourself.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BlockUserBody' }
+      responses:
+        '200':
+          description: The updated user
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CurrentUser' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /admin/categories:
+    get:
+      tags: [Admin]
+      summary: Categories with usage counts
+      description: Sorted by name. A category with `ordersCount > 0` cannot be deleted.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: A page of categories
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CategoryWithCountPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Admin]
+      summary: Create a category
+      description: |
+        The slug is generated from the name. **409** if a category with the
+        same name or slug exists ("Web Dev" and "web dev" collide). **400** if the
+        name has no Latin letters or digits to build a slug from.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CategoryBody' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CategoryWithCount' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /admin/categories/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    patch:
+      tags: [Admin]
+      summary: Rename a category
+      description: The slug follows the new name. Same 400 / 409 rules as create.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CategoryBody' }
+      responses:
+        '200':
+          description: Renamed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CategoryWithCount' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    delete:
+      tags: [Admin]
+      summary: Delete a category
+      description: '**409** while any order still uses it.'
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204':
+          description: Deleted, no body
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Still used by orders
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { message: Category is used by 6 order(s) and cannot be deleted }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: The `token` from login or register. Holds `{ id, role }`, valid for 7 days.
+
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: integer, minimum: 1 }
+      example: 1
+    Page:
+      name: page
+      in: query
+      schema: { type: integer, minimum: 1, default: 1 }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 50, default: 10 }
+
+  responses:
+    BadRequest:
+      description: Validation failed
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ValidationError' }
+    Unauthorized:
+      description: Missing, malformed or expired token
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { message: Invalid or expired token }
+    Forbidden:
+      description: Wrong role, not the owner, or the account is blocked
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { message: 'This action requires role: CLIENT' }
+    NotFound:
+      description: The resource does not exist
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { message: Order not found }
+    Conflict:
+      description: A business rule refused the action
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+  schemas:
+    # --- Errors ----------------------------------------------------------------
+    Error:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string }
+    ValidationError:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string, example: Validation failed }
+        details:
+          type: array
+          items:
+            type: object
+            required: [field, message]
+            properties:
+              field: { type: string, example: price }
+              message: { type: string, example: '"price" must be greater than or equal to 1' }
+
+    # --- Enums -----------------------------------------------------------------
+    Role:
+      type: string
+      enum: [CLIENT, FREELANCER, ADMIN]
+    OrderStatus:
+      type: string
+      enum: [OPEN, IN_PROGRESS, REVIEW, COMPLETED, CANCELLED]
+    ProposalStatus:
+      type: string
+      enum: [PENDING, ACCEPTED, REJECTED]
+
+    # --- Paging ----------------------------------------------------------------
+    PageMeta:
+      type: object
+      required: [total, page, pages]
+      properties:
+        total: { type: integer, example: 13 }
+        page: { type: integer, example: 1 }
+        pages: { type: integer, minimum: 1, example: 2 }
+    OrderPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/Order' } }
+    ProposalWithOrderPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/ProposalWithOrder' } }
+    MessagePage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/Message' } }
+    ReviewPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/Review' } }
+    UserPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/User' } }
+    AdminUserPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/CurrentUser' } }
+    CategoryWithCountPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/CategoryWithCount' } }
+
+    # --- Users -----------------------------------------------------------------
+    UserSummary:
+      description: A user nested in an order (`client`, `freelancer`).
+      type: object
+      required: [id, name, rating]
+      properties:
+        id: { type: integer, example: 2 }
+        name: { type: string, example: Karen Petrosyan }
+        rating: { type: number, nullable: true, example: 5 }
+    UserBadge:
+      description: A user nested in a proposal (`freelancer`).
+      allOf:
+        - $ref: '#/components/schemas/UserSummary'
+        - type: object
+          required: [reviewsCount]
+          properties:
+            reviewsCount: { type: integer, example: 2 }
+    UserRef:
+      description: A user nested in a message (`sender`) or a review (`author`).
+      type: object
+      required: [id, name, avatarUrl]
+      properties:
+        id: { type: integer, example: 4 }
+        name: { type: string, example: Anna Hakobyan }
+        avatarUrl: { type: string, nullable: true, example: null }
+    User:
+      description: A public profile. No email — only its owner and the admin see that.
+      type: object
+      required: [id, name, role, bio, skills, hourlyRate, portfolioUrl, avatarUrl, rating, reviewsCount, isBlocked, createdAt]
+      properties:
+        id: { type: integer, example: 4 }
+        name: { type: string, example: Anna Hakobyan }
+        role: { $ref: '#/components/schemas/Role' }
+        bio: { type: string, nullable: true, example: Frontend developer, 3 years with React and TypeScript. }
+        skills:
+          type: array
+          items: { type: string }
+          example: [react, typescript, css]
+        hourlyRate: { type: integer, nullable: true, example: 20 }
+        portfolioUrl: { type: string, nullable: true, example: 'https://example.com/anna' }
+        avatarUrl: { type: string, nullable: true, example: null }
+        rating:
+          type: number
+          nullable: true
+          description: Average of received reviews, one decimal. `null` until the first review.
+          example: 4.5
+        reviewsCount: { type: integer, example: 2 }
+        isBlocked: { type: boolean, example: false }
+        createdAt: { type: string, format: date-time }
+    CurrentUser:
+      description: A profile as seen by its owner (or the admin) — with the email.
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          required: [email]
+          properties:
+            email: { type: string, format: email, example: anna@freelancehub.dev }
+    PublicProfile:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          required: [reviews]
+          properties:
+            reviews:
+              description: The latest 5 reviews about this user.
+              type: array
+              items: { $ref: '#/components/schemas/Review' }
+
+    # --- Domain ----------------------------------------------------------------
+    Category:
+      type: object
+      required: [id, name, slug]
+      properties:
+        id: { type: integer, example: 1 }
+        name: { type: string, example: Web Development }
+        slug: { type: string, example: web-development }
+    CategoryWithCount:
+      allOf:
+        - $ref: '#/components/schemas/Category'
+        - type: object
+          required: [ordersCount]
+          properties:
+            ordersCount: { type: integer, example: 6 }
+    Order:
+      type: object
+      required:
+        [id, title, description, budget, deadline, status, clientId, freelancerId, categoryId,
+         client, freelancer, category, proposalsCount, createdAt]
+      properties:
+        id: { type: integer, example: 1 }
+        title: { type: string, example: Landing page for an online store }
+        description: { type: string, example: A one-page site with a product block, a contact form and a mobile layout. }
+        budget: { type: integer, example: 300 }
+        deadline: { type: string, format: date-time, nullable: true }
+        status: { $ref: '#/components/schemas/OrderStatus' }
+        clientId: { type: integer, example: 2 }
+        freelancerId:
+          type: integer
+          nullable: true
+          description: '`null` until a proposal is accepted.'
+          example: null
+        categoryId: { type: integer, example: 1 }
+        client: { $ref: '#/components/schemas/UserSummary' }
+        freelancer:
+          allOf: [{ $ref: '#/components/schemas/UserSummary' }]
+          nullable: true
+        category: { $ref: '#/components/schemas/Category' }
+        proposalsCount: { type: integer, example: 3 }
+        createdAt: { type: string, format: date-time }
+    OrderSummary:
+      description: The order nested in `GET /proposals/my`.
+      type: object
+      required: [id, title, status, budget, deadline]
+      properties:
+        id: { type: integer, example: 1 }
+        title: { type: string, example: Landing page for an online store }
+        status: { $ref: '#/components/schemas/OrderStatus' }
+        budget: { type: integer, example: 300 }
+        deadline: { type: string, format: date-time, nullable: true }
+    Proposal:
+      type: object
+      required: [id, orderId, freelancerId, price, coverLetter, status, viewedByClient, freelancer, createdAt]
+      properties:
+        id: { type: integer, example: 2 }
+        orderId: { type: integer, example: 1 }
+        freelancerId: { type: integer, example: 4 }
+        price: { type: integer, example: 280 }
+        coverLetter: { type: string, example: I build landing pages in React with a fully responsive layout. Ready in 5 days. }
+        status: { $ref: '#/components/schemas/ProposalStatus' }
+        viewedByClient: { type: boolean, example: false }
+        freelancer: { $ref: '#/components/schemas/UserBadge' }
+        createdAt: { type: string, format: date-time }
+    ProposalWithOrder:
+      allOf:
+        - $ref: '#/components/schemas/Proposal'
+        - type: object
+          required: [order]
+          properties:
+            order: { $ref: '#/components/schemas/OrderSummary' }
+    Message:
+      type: object
+      required: [id, orderId, senderId, body, sender, createdAt]
+      properties:
+        id: { type: integer, example: 1 }
+        orderId: { type: integer, example: 4 }
+        senderId: { type: integer, example: 2 }
+        body: { type: string, example: Hi Mariam! The brand colors are in the shared folder. }
+        sender: { $ref: '#/components/schemas/UserRef' }
+        createdAt: { type: string, format: date-time }
+    Review:
+      type: object
+      required: [id, orderId, authorId, targetId, rating, comment, author, createdAt]
+      properties:
+        id: { type: integer, example: 1 }
+        orderId: { type: integer, example: 6 }
+        authorId: { type: integer, example: 2 }
+        targetId: { type: integer, example: 4 }
+        rating: { type: integer, minimum: 1, maximum: 5, example: 5 }
+        comment: { type: string, nullable: true, example: Fast and precise. Fixed more than I asked for. }
+        author: { $ref: '#/components/schemas/UserRef' }
+        createdAt: { type: string, format: date-time }
+
+    # --- Composite responses ---------------------------------------------------
+    AuthResponse:
+      type: object
+      required: [token, user]
+      properties:
+        token: { type: string, example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... }
+        user: { $ref: '#/components/schemas/CurrentUser' }
+    AcceptProposalResponse:
+      type: object
+      required: [order, proposal]
+      properties:
+        order: { $ref: '#/components/schemas/Order' }
+        proposal: { $ref: '#/components/schemas/Proposal' }
+    OrderStatusCounts:
+      type: object
+      required: [OPEN, IN_PROGRESS, REVIEW, COMPLETED, CANCELLED]
+      properties:
+        OPEN: { type: integer, example: 3 }
+        IN_PROGRESS: { type: integer, example: 1 }
+        REVIEW: { type: integer, example: 1 }
+        COMPLETED: { type: integer, example: 1 }
+        CANCELLED: { type: integer, example: 1 }
+    ProposalStatusCounts:
+      type: object
+      required: [PENDING, ACCEPTED, REJECTED]
+      properties:
+        PENDING: { type: integer, example: 1 }
+        ACCEPTED: { type: integer, example: 4 }
+        REJECTED: { type: integer, example: 1 }
+    ClientDashboard:
+      type: object
+      required: [role, orders, recentOrders, unseenProposals]
+      properties:
+        role: { type: string, enum: [CLIENT] }
+        orders: { $ref: '#/components/schemas/OrderStatusCounts' }
+        recentOrders:
+          description: The latest 5 of my orders.
+          type: array
+          items: { $ref: '#/components/schemas/Order' }
+        unseenProposals:
+          description: Pending proposals on my orders that I have not opened yet — the notification badge.
+          type: integer
+          example: 3
+    FreelancerDashboard:
+      type: object
+      required: [role, proposals, activeOrders, rating, reviewsCount]
+      properties:
+        role: { type: string, enum: [FREELANCER] }
+        proposals: { $ref: '#/components/schemas/ProposalStatusCounts' }
+        activeOrders:
+          description: Orders assigned to me in `IN_PROGRESS` or `REVIEW`.
+          type: array
+          items: { $ref: '#/components/schemas/Order' }
+        rating: { type: number, nullable: true, example: 4.5 }
+        reviewsCount: { type: integer, example: 2 }
+    AdminDashboard:
+      type: object
+      required: [role, users, blockedUsers, orders, categories]
+      properties:
+        role: { type: string, enum: [ADMIN] }
+        users:
+          type: object
+          required: [CLIENT, FREELANCER, ADMIN]
+          properties:
+            CLIENT: { type: integer, example: 2 }
+            FREELANCER: { type: integer, example: 4 }
+            ADMIN: { type: integer, example: 1 }
+        blockedUsers: { type: integer, example: 1 }
+        orders: { $ref: '#/components/schemas/OrderStatusCounts' }
+        categories: { type: integer, example: 8 }
+
+    # --- Request bodies --------------------------------------------------------
+    RegisterBody:
+      type: object
+      required: [email, password, name, role]
+      properties:
+        email: { type: string, format: email, example: new.user@example.com }
+        password: { type: string, minLength: 6, maxLength: 72, example: secret123 }
+        name: { type: string, minLength: 2, maxLength: 60, example: New User }
+        role: { type: string, enum: [CLIENT, FREELANCER], example: FREELANCER }
+    LoginBody:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, example: client@freelancehub.dev }
+        password: { type: string, example: client123 }
+    CreateOrderBody:
+      type: object
+      required: [title, description, budget, categoryId]
+      properties:
+        title: { type: string, minLength: 5, maxLength: 120, example: Mobile layout for a blog }
+        description:
+          type: string
+          minLength: 20
+          maxLength: 5000
+          example: Make an existing blog template fully responsive down to 360px.
+        budget: { type: integer, minimum: 1, maximum: 1000000, example: 150 }
+        deadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: Must be in the future.
+          example: '2027-01-15T00:00:00.000Z'
+        categoryId: { type: integer, minimum: 1, example: 1 }
+    UpdateOrderBody:
+      description: Any subset of the create fields, at least one.
+      type: object
+      minProperties: 1
+      properties:
+        title: { type: string, minLength: 5, maxLength: 120 }
+        description: { type: string, minLength: 20, maxLength: 5000 }
+        budget: { type: integer, minimum: 1, maximum: 1000000, example: 350 }
+        deadline: { type: string, format: date-time, nullable: true }
+        categoryId: { type: integer, minimum: 1 }
+    StatusBody:
+      type: object
+      required: [status]
+      properties:
+        status: { $ref: '#/components/schemas/OrderStatus' }
+      example: { status: COMPLETED }
+    CreateProposalBody:
+      type: object
+      required: [price, coverLetter]
+      properties:
+        price: { type: integer, minimum: 1, maximum: 1000000, example: 140 }
+        coverLetter:
+          type: string
+          minLength: 20
+          maxLength: 3000
+          example: I write product copy for e-commerce, samples are in my portfolio.
+    CreateMessageBody:
+      type: object
+      required: [body]
+      properties:
+        body: { type: string, minLength: 1, maxLength: 2000, example: The first draft is ready! }
+    CreateReviewBody:
+      type: object
+      required: [rating]
+      properties:
+        rating: { type: integer, minimum: 1, maximum: 5, example: 5 }
+        comment: { type: string, maxLength: 500, nullable: true, example: Great client, clear brief. }
+    UpdateProfileBody:
+      type: object
+      minProperties: 1
+      properties:
+        bio: { type: string, maxLength: 1000, nullable: true }
+        skills:
+          type: array
+          maxItems: 20
+          uniqueItems: true
+          items: { type: string, maxLength: 30 }
+          example: [react, typescript, vite]
+        hourlyRate: { type: integer, minimum: 1, maximum: 10000, nullable: true, example: 22 }
+        portfolioUrl: { type: string, format: uri, nullable: true }
+        avatarUrl: { type: string, format: uri, nullable: true }
+    BlockUserBody:
+      type: object
+      required: [isBlocked]
+      properties:
+        isBlocked: { type: boolean, example: true }
+    CategoryBody:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 50, example: Data Science }

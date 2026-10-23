@@ -1,13 +1,15 @@
 # FreelanceHub
 
-Freelance marketplace, graduation project, 15-20 day budget, MVP level. A client
+Freelance marketplace, a portfolio project for a frontend interview, MVP level. A client
 posts an order, freelancers send proposals, the client picks one, both sides
 review each other afterwards. The point of the project is that the system
 **refuses incorrect actions**, so rules matter more than features.
 
 Reference docs — read the relevant one before writing code:
-`docs/API.md` (endpoint contract), `docs/DB.md` (data model), `docs/PLAN.md`
-(day-by-day plan).
+`docs/API.md` (endpoint overview), `backend/openapi.yaml` (detailed contract,
+served as Swagger UI at `/api/docs`), `docs/DB.md` (data model),
+`docs/BACKEND.md` (how the backend works, for beginners), `docs/PLAN.md` (plan). A change to the API updates all three: `openapi.yaml`, `docs/API.md` and
+`frontend/src/types/`.
 
 ## Division of labor
 
@@ -19,7 +21,7 @@ placeholder comment each; that is intentional.
 ## Stack — decided, do not propose alternatives
 
 Backend: Node + Express 5, Sequelize + PostgreSQL, Joi, jsonwebtoken, bcrypt,
-cors, morgan, dotenv. **CommonJS** (`require` / `module.exports`, never `import`
+cors, morgan, dotenv, swagger-ui-express + yaml (serves `backend/openapi.yaml`). **CommonJS** (`require` / `module.exports`, never `import`
 or `export`); requires are written without the `.js` extension.
 
 Frontend: React 18 + **TypeScript** (strict), Vite, react-router-dom, Zustand,
@@ -78,7 +80,8 @@ sentence and wait.
 
 - Comments, commit messages and identifiers in English. Conversation with the
   user stays in Russian.
-- Backend code gets explanatory comments — the user has to defend this code.
+- Backend comments explain non-obvious decisions at normal density. The project is
+  judged on its frontend; the backend is a tool the user builds against.
   Comment the `acceptProposal` transaction and the status transition map
   thoroughly.
 - Small commits, English messages, feature branches (`feat/orders`), `main`
@@ -89,6 +92,8 @@ sentence and wait.
 ```bash
 cd backend  && npm run dev    # nodemon, port 4000
 cd backend  && npm run seed   # categories + demo users + sample orders
+cd backend  && npm run seed -- --fresh   # drop everything and reseed (dev only)
+# Swagger UI: http://localhost:4000/api/docs
 cd frontend && npm run dev    # Vite, port 5173
 ```
 

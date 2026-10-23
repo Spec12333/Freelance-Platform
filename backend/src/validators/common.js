@@ -15,4 +15,7 @@ const paginationQuery = {
   limit: Joi.number().integer().min(1).max(MAX_LIMIT).default(DEFAULT_LIMIT),
 };
 
-module.exports = { idParam, paginationQuery };
+// For list endpoints that take nothing but page and limit.
+const paginationSchema = Joi.object(paginationQuery);
+
+module.exports = { idParam, paginationQuery, paginationSchema };
