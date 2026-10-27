@@ -8,7 +8,8 @@ review each other afterwards. The point of the project is that the system
 Reference docs — read the relevant one before writing code:
 `docs/API.md` (endpoint overview), `backend/openapi.yaml` (detailed contract,
 served as Swagger UI at `/api/docs`), `docs/DB.md` (data model),
-`docs/BACKEND.md` (how the backend works, for beginners), `docs/PLAN.md` (plan). A change to the API updates all three: `openapi.yaml`, `docs/API.md` and
+`docs/BACKEND.md` (how the backend works, for beginners), `docs/DESIGN.md`
+(visual style for every screen), `docs/PLAN.md` (plan). A change to the API updates all three: `openapi.yaml`, `docs/API.md` and
 `frontend/src/types/`.
 
 ## Division of labor
@@ -25,7 +26,9 @@ cors, morgan, dotenv, swagger-ui-express + yaml (serves `backend/openapi.yaml`).
 or `export`); requires are written without the `.js` extension.
 
 Frontend: React 18 + **TypeScript** (strict), Vite, react-router-dom, Zustand,
-TanStack Query, axios. `.tsx` for files with JSX, `.ts` for everything else.
+TanStack Query, axios, **Tailwind CSS v4** via `@tailwindcss/vite` (no
+`tailwind.config.js` or PostCSS config; theme tokens go in `@theme` in
+`src/index.css`). CSS modules were considered and rejected. `.tsx` for files with JSX, `.ts` for everything else.
 Shared types live in `frontend/src/types/` and mirror `docs/DB.md` and
 `docs/API.md` — the API contract is the single source of truth, so types follow
 the docs, never the other way round.
