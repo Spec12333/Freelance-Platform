@@ -90,3 +90,16 @@ export const HomeIcon = (props: IconProps) => (
     <path d="M10 20v-6h4v6" />
   </Icon>
 );
+
+export const PlusIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M12 5v14M5 12h14" />
+  </Icon>
+);
+
+export const LogoutIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+    <path d="m16 17 5-5-5-5M21 12H9" />
+  </Icon>
+);
