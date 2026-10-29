@@ -1,8 +1,8 @@
-// getFreelancers(filters), getFreelancer(id), updateMyProfile.
+// getFreelancers(filters), getFreelancer(id), updateMyProfile(body), getFreelancersReviews(id).
 
-import { FreelancerFilters, Paginated, PaginationParams, UpdateProfileBody } from "@/types/api";
+import type { FreelancerFilters, Paginated, PaginationParams, UpdateProfileBody } from "@/types/api";
 import api from "./client";
-import { CurrentUser, PublicProfile, Review, User } from "@/types/models";
+import type { CurrentUser, PublicProfile, Review, User } from "@/types/models";
 
 export const getFreelancers = async (filters: FreelancerFilters) => {
   const result = await api.get<Paginated<User>>("/freelancers", {

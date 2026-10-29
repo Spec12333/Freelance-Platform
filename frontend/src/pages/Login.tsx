@@ -85,7 +85,7 @@ export default function Login() {
           )}
         </div>
 
-        {serverError && <div className="alert-error">{serverError}</div>}
+        {serverError && <div role="alert" className="alert-error">{serverError}</div>}
 
         <div className="pt-1">
           <button

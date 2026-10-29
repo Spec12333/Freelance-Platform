@@ -61,6 +61,7 @@ export type User = {
   reviewsCount: number;
   isBlocked: boolean;
   createdAt: string;
+  updatedAt: string; // last change of the row; equals createdAt until the first update
 };
 
 // The signed-in user: GET /auth/me and the `user` field of an auth response.
@@ -92,6 +93,7 @@ export type Order = {
   category: Category;
   proposalsCount: number; // the proposals themselves have their own endpoint
   createdAt: string;
+  updatedAt: string; // last change of the row; equals createdAt until the first update
 };
 
 export type Proposal = {
@@ -107,6 +109,7 @@ export type Proposal = {
   viewedByClient: boolean;
   freelancer: UserBadge;
   createdAt: string;
+  updatedAt: string; // last change of the row; equals createdAt until the first update
 };
 
 // The order nested in a freelancer's own proposal list (GET /proposals/my).
@@ -127,6 +130,7 @@ export type Review = {
   comment: string | null;
   author: UserRef;
   createdAt: string;
+  updatedAt: string; // last change of the row; equals createdAt until the first update
 };
 
 // GET /freelancers/:id - a profile together with the latest reviews about it.
@@ -141,4 +145,5 @@ export type Message = {
   body: string;
   sender: UserRef;
   createdAt: string;
+  updatedAt: string; // last change of the row; equals createdAt until the first update
 };

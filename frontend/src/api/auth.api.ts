@@ -1,4 +1,4 @@
-// register, login, me.
+// register(body), login(body), me.
 
 import api from "./client";
 import type { LoginBody, RegisterBody, AuthResponse } from "@/types/api";

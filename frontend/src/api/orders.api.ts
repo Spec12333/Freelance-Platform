@@ -1,4 +1,4 @@
-// getOrders(filters), getOrder(id), createOrder, updateOrder, changeStatus.
+// getOrders(filters), getOrder(id), createOrder(body), updateOrder(id, body), changeStatus(id, status).
 
 import type {
   CreateOrderBody,
@@ -7,7 +7,7 @@ import type {
   UpdateOrderBody,
 } from "@/types/api";
 import api from "./client";
-import { Order, OrderStatus } from "@/types/models";
+import type { Order, OrderStatus } from "@/types/models";
 
 export const getOrders = async (filters: OrderFilters) => {
   const result = await api.get<Paginated<Order>>("/orders", {

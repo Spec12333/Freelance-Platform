@@ -62,12 +62,16 @@ register, profile update) and the admin get it.
   "bio": "Frontend developer...", "skills": ["react", "typescript", "css"],
   "hourlyRate": 20, "portfolioUrl": "https://example.com/anna", "avatarUrl": null,
   "rating": 4.5, "reviewsCount": 2, "isBlocked": false,
-  "createdAt": "2026-10-23T10:00:00.000Z"
+  "createdAt": "2026-10-23T10:00:00.000Z", "updatedAt": "2026-10-23T10:00:00.000Z"
 }
 ```
 
 `rating` is the average of the reviews where this user is the target, one
 decimal, `null` until the first review. It is computed, not stored.
+
+Every top-level object (`User`, `Order`, `Proposal`, `Message`, `Review`) carries
+`createdAt` and `updatedAt`; `updatedAt` equals `createdAt` until the row is first
+changed. Nested user shapes and `Category` have neither.
 
 `Order` — always with its relations, whichever endpoint returns it:
 
@@ -80,7 +84,7 @@ decimal, `null` until the first review. It is computed, not stored.
   "freelancer": null,
   "category": { "id": 1, "name": "Web Development", "slug": "web-development" },
   "proposalsCount": 3,
-  "createdAt": "2026-10-21T10:00:00.000Z"
+  "createdAt": "2026-10-21T10:00:00.000Z", "updatedAt": "2026-10-23T10:00:00.000Z"
 }
 ```
 
@@ -92,11 +96,11 @@ Nested users are trimmed per context and never carry an email:
 | `proposal.freelancer` | `{ id, name, rating, reviewsCount }` |
 | `message.sender`, `review.author` | `{ id, name, avatarUrl }` |
 
-`Proposal`: `{ id, orderId, freelancerId, price, coverLetter, status, viewedByClient, freelancer, createdAt }`
+`Proposal`: `{ id, orderId, freelancerId, price, coverLetter, status, viewedByClient, freelancer, createdAt, updatedAt }`
 
-`Message`: `{ id, orderId, senderId, body, sender, createdAt }`
+`Message`: `{ id, orderId, senderId, body, sender, createdAt, updatedAt }`
 
-`Review`: `{ id, orderId, authorId, targetId, rating, comment, author, createdAt }`
+`Review`: `{ id, orderId, authorId, targetId, rating, comment, author, createdAt, updatedAt }`
 
 ## Auth
 

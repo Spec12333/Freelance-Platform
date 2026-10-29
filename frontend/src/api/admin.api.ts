@@ -1,6 +1,7 @@
 // Categories: list/create/update/remove. Users: list, block/unblock.
+// getUsers(filters), blockUser(id, isBlocked), getAdminCategories(params), createCategory(name), renameCategory(id, name), deleteCategory(id).
 
-import {
+import type {
   AdminUserFilters,
   AdminUsersResponse,
   CategoryWithCount,
@@ -8,7 +9,7 @@ import {
   PaginationParams,
 } from "@/types/api";
 import api from "./client";
-import { CurrentUser } from "@/types/models";
+import type { CurrentUser } from "@/types/models";
 
 export const getUsers = async (filters: AdminUserFilters) => {
   const result = await api.get<AdminUsersResponse>("/admin/users", {
@@ -33,7 +34,9 @@ export const getAdminCategories = async (params?: PaginationParams) => {
 };
 
 export const createCategory = async (name: string) => {
-  const result = await api.post<CategoryWithCount>("/admin/categories", { name: name });
+  const result = await api.post<CategoryWithCount>("/admin/categories", {
+    name: name,
+  });
   return result.data;
 };
 

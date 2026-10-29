@@ -951,7 +951,7 @@ components:
     User:
       description: A public profile. No email — only its owner and the admin see that.
       type: object
-      required: [id, name, role, bio, skills, hourlyRate, portfolioUrl, avatarUrl, rating, reviewsCount, isBlocked, createdAt]
+      required: [id, name, role, bio, skills, hourlyRate, portfolioUrl, avatarUrl, rating, reviewsCount, isBlocked, createdAt, updatedAt]
       properties:
         id: { type: integer, example: 4 }
         name: { type: string, example: Anna Hakobyan }
@@ -972,6 +972,10 @@ components:
         reviewsCount: { type: integer, example: 2 }
         isBlocked: { type: boolean, example: false }
         createdAt: { type: string, format: date-time }
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last change of the row. Equals `createdAt` until the first update.
     CurrentUser:
       description: A profile as seen by its owner (or the admin) — with the email.
       allOf:
@@ -1010,7 +1014,7 @@ components:
       type: object
       required:
         [id, title, description, budget, deadline, status, clientId, freelancerId, categoryId,
-         client, freelancer, category, proposalsCount, createdAt]
+         client, freelancer, category, proposalsCount, createdAt, updatedAt]
       properties:
         id: { type: integer, example: 1 }
         title: { type: string, example: Landing page for an online store }
@@ -1032,6 +1036,10 @@ components:
         category: { $ref: '#/components/schemas/Category' }
         proposalsCount: { type: integer, example: 3 }
         createdAt: { type: string, format: date-time }
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last change of the row. Equals `createdAt` until the first update.
     OrderSummary:
       description: The order nested in `GET /proposals/my`.
       type: object
@@ -1044,7 +1052,7 @@ components:
         deadline: { type: string, format: date-time, nullable: true }
     Proposal:
       type: object
-      required: [id, orderId, freelancerId, price, coverLetter, status, viewedByClient, freelancer, createdAt]
+      required: [id, orderId, freelancerId, price, coverLetter, status, viewedByClient, freelancer, createdAt, updatedAt]
       properties:
         id: { type: integer, example: 2 }
         orderId: { type: integer, example: 1 }
@@ -1055,6 +1063,10 @@ components:
         viewedByClient: { type: boolean, example: false }
         freelancer: { $ref: '#/components/schemas/UserBadge' }
         createdAt: { type: string, format: date-time }
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last change of the row. Equals `createdAt` until the first update.
     ProposalWithOrder:
       allOf:
         - $ref: '#/components/schemas/Proposal'
@@ -1064,7 +1076,7 @@ components:
             order: { $ref: '#/components/schemas/OrderSummary' }
     Message:
       type: object
-      required: [id, orderId, senderId, body, sender, createdAt]
+      required: [id, orderId, senderId, body, sender, createdAt, updatedAt]
       properties:
         id: { type: integer, example: 1 }
         orderId: { type: integer, example: 4 }
@@ -1072,9 +1084,13 @@ components:
         body: { type: string, example: Hi Mariam! The brand colors are in the shared folder. }
         sender: { $ref: '#/components/schemas/UserRef' }
         createdAt: { type: string, format: date-time }
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last change of the row. Equals `createdAt` until the first update.
     Review:
       type: object
-      required: [id, orderId, authorId, targetId, rating, comment, author, createdAt]
+      required: [id, orderId, authorId, targetId, rating, comment, author, createdAt, updatedAt]
       properties:
         id: { type: integer, example: 1 }
         orderId: { type: integer, example: 6 }
@@ -1084,6 +1100,10 @@ components:
         comment: { type: string, nullable: true, example: Fast and precise. Fixed more than I asked for. }
         author: { $ref: '#/components/schemas/UserRef' }
         createdAt: { type: string, format: date-time }
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last change of the row. Equals `createdAt` until the first update.
 
     # --- Composite responses ---------------------------------------------------
     AuthResponse:

@@ -1,4 +1,6 @@
-import { Category } from "@/types/models";
+// getCategories() - public list for the order filters and the order form.
+
+import type { Category } from "@/types/models";
 import api from "./client";
 
 export const getCategories = async () => {

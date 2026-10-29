@@ -1,6 +1,6 @@
 // getDashboard().
 
-import { DashboardResponse } from "@/types/api";
+import type { DashboardResponse } from "@/types/api";
 import api from "./client";
 
 export const getDashboard = async () => {

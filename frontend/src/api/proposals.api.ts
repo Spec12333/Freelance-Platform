@@ -1,8 +1,8 @@
-// getProposals(orderId), createProposal(orderId, data), acceptProposal(id).
+// getProposals(orderId), createProposal(orderId, data), acceptProposal(id), getMyProposals(filters).
 
-import { Proposal, ProposalWithOrder } from "@/types/models";
+import type { Proposal, ProposalWithOrder } from "@/types/models";
 import api from "./client";
-import {
+import type {
   AcceptProposalResponse,
   CreateProposalBody,
   MyProposalsFilters,

@@ -7,6 +7,9 @@
     "start": "node src/server.js",
     "seed": "node src/seed.js"
   },
+  "nodemonConfig": {
+    "ext": "js,json,yaml"
+  },
   "keywords": [],
   "author": "",
   "license": "MIT",

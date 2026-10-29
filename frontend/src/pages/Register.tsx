@@ -147,7 +147,7 @@ export default function Register() {
           {errors.role && <p className="field-error">{errors.role.message}</p>}
         </div>
 
-        {serverError && <div className="alert-error">{serverError}</div>}
+        {serverError && <div role="alert" className="alert-error">{serverError}</div>}
 
         <div className="pt-1">
           <button

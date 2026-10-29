@@ -1,1 +1,1 @@
-// Order status badge: color and label come from utils/constants.js.
+// Order status badge: color and label come from utils/constants.ts.

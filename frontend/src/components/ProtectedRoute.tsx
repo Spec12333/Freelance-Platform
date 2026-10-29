@@ -1,7 +1,7 @@
 // Token check + optional roles={["CLIENT"]}; redirects to /login or shows 403.
 
 import { useAuthStore } from "@/store/auth";
-import { Role } from "@/types/models";
+import type { Role } from "@/types/models";
 import { Navigate, Outlet } from "react-router-dom";
 import NotFound from "@/pages/NotFound";
 type Props = {
@@ -16,7 +16,7 @@ export const ProtectedRoute: React.FC<Props> = ({ roles }) => {
   }
 
   if (roles && !roles.includes(user.role)) {
-    return <NotFound code={403} />;
+    return <NotFound code={403} inline />;
   }
 
   return <Outlet />;
