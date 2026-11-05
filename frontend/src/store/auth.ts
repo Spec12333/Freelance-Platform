@@ -1,5 +1,6 @@
 // Zustand store: user, token, login(), logout(); persisted to localStorage.
 
+import { queryClient } from "@/api/queryClient";
 import { CurrentUser } from "@/types/models";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
@@ -17,7 +18,9 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       user: null,
       login: (token, user) => set({ token, user }),
-      logout: () => set({ token: null, user: null }),
+      logout: () => {
+        (set({ token: null, user: null }), queryClient.clear());
+      },
     }),
     {
       name: "Auth",

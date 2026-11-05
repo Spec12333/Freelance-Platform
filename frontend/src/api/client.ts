@@ -33,15 +33,24 @@ api.interceptors.response.use(
     const status = error.response?.status;
     const url = error.config?.url ?? "";
     const { token, logout } = useAuthStore.getState();
+    // A late failure from an old token must not log out a newer session.
+    const isCurrentSession = Boolean(
+      token && error.config?.headers?.Authorization === `Bearer ${token}`,
+    );
 
     // Token expired or invalid. ProtectedRoute reacts to the empty store
     // and redirects to /login, so no manual navigation here.
-    if (status === 401 && token && !AUTH_FORMS.includes(url)) {
+    if (status === 401 && isCurrentSession && !AUTH_FORMS.includes(url)) {
       logout();
     }
 
     // Blocked by an admin while signed in: the old token keeps returning 403.
-    if (status === 403 && error.response?.data?.message === "Your account has been blocked") {
+    if (
+      status === 403 &&
+      isCurrentSession &&
+      !AUTH_FORMS.includes(url) &&
+      error.response?.data?.message === "Your account has been blocked"
+    ) {
       logout();
     }
 

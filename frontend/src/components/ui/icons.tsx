@@ -103,3 +103,24 @@ export const LogoutIcon = (props: IconProps) => (
     <path d="m16 17 5-5-5-5M21 12H9" />
   </Icon>
 );
+
+export const AlertCircleIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v6M12 17h.01" />
+  </Icon>
+);
+
+export const RefreshIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M20 7v5h-5M4 17v-5h5" />
+    <path d="M6.1 7a7 7 0 0 1 11.5-1L20 12M4 12l2.4 6A7 7 0 0 0 17.9 17" />
+  </Icon>
+);
+
+export const InboxIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="m3 13 3-8h12l3 8v6H3v-6Z" />
+    <path d="M3 13h5l2 3h4l2-3h5" />
+  </Icon>
+);

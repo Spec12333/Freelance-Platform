@@ -101,6 +101,8 @@ Money is always bold: `$300` in `font-bold text-gray-900`.
 - **Errors**: field errors in `.field-error`, server errors in `.alert-error`
   with `role="alert"`, showing the server's `message`.
 - **Loading**: a centered spinner for pages; a disabled button for mutations.
+- **Empty lists**: a white card with a neutral inbox icon, centered title and
+  description, and an optional primary action supplied by the parent.
 - **Focus**: every interactive element shows a ring on keyboard focus — the
   shared classes already do; keep it on custom elements too.
 - **Disabled**: `opacity-60`, no hover effect.
@@ -112,3 +114,7 @@ Money is always bold: `$300` in `font-bold text-gray-900`.
 | `components/layout/AuthLayout.tsx` | Shell for Login and Register (brand panel + form column) |
 | `components/ui/Logo.tsx` | Wordmark; `variant="light"` on dark backgrounds |
 | `components/ui/icons.tsx` | Inline SVG icons; size with `className="size-5"` |
+| `components/ui/Spinner.tsx` | Centered green loading ring with a text label; respects reduced motion |
+| `components/ui/ErrorMessage.tsx` | White error card, red alert icon and server message, optional green retry button |
+| `components/ui/EmptyState.tsx` | Empty list card with `title`, optional `description`, and `action: { label, onClick }` |
+| `components/StatusBadge.tsx` | Order or proposal status pill; labels and colours come from `utils/constants.ts` |

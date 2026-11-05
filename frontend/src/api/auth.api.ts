@@ -14,7 +14,7 @@ export const registerUser = async (body: RegisterBody) => {
   return res.data;
 };
 
-export const me = async () => {
-  const res = await api.get<CurrentUser>("/auth/me");
+export const me = async (signal?: AbortSignal) => {
+  const res = await api.get<CurrentUser>("/auth/me", { signal });
   return res.data;
 };

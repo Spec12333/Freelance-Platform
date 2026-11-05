@@ -14,8 +14,35 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import Layout from "./components/layout/Layout";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminCategories from "./pages/admin/AdminCategories";
+import { useAuthInit } from "./hooks/useAuthInit";
+import Spinner from "./components/ui/Spinner";
+import ErrorMessage from "./components/ui/ErrorMessage";
+
 // All <Route> definitions: public (Login, Register) and ProtectedRoute-wrapped ones inside Layout.
 export default function App() {
+  const { isChecking, error, retry } = useAuthInit();
+
+  if (isChecking) {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-5">
+        <Spinner label="Checking your session…" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-5">
+        <ErrorMessage
+          title="Unable to check your session"
+          message={error}
+          onRetry={retry}
+          className="w-full max-w-md"
+        />
+      </div>
+    );
+  }
+
   return (
     <BrowserRouter>
       <Routes>
