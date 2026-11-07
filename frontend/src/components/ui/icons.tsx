@@ -124,3 +124,43 @@ export const InboxIcon = (props: IconProps) => (
     <path d="M3 13h5l2 3h4l2-3h5" />
   </Icon>
 );
+
+export const CalendarIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <rect x="3" y="5" width="18" height="16" rx="2" />
+    <path d="M16 3v4M8 3v4M3 11h18" />
+  </Icon>
+);
+
+export const ArrowUpRightIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M7 17 17 7M7 7h10v10" />
+  </Icon>
+);
+
+export const SearchIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <circle cx="10.5" cy="10.5" r="6.5" />
+    <path d="m16 16 4.5 4.5" />
+  </Icon>
+);
+
+export const CloseIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="m6 6 12 12M18 6 6 18" />
+  </Icon>
+);
+
+export const FilterIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M4 7h16M4 17h16" />
+    <circle cx="9" cy="7" r="2" fill="currentColor" stroke="none" />
+    <circle cx="15" cy="17" r="2" fill="currentColor" stroke="none" />
+  </Icon>
+);
+
+export const LayersIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="m12 3 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 16l9 5 9-5" />
+  </Icon>
+);

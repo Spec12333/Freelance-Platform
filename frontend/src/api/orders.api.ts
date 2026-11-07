@@ -9,9 +9,10 @@ import type {
 import api from "./client";
 import type { Order, OrderStatus } from "@/types/models";
 
-export const getOrders = async (filters: OrderFilters) => {
+export const getOrders = async (filters: OrderFilters, signal?: AbortSignal) => {
   const result = await api.get<Paginated<Order>>("/orders", {
     params: filters,
+    signal,
   });
   return result.data;
 };

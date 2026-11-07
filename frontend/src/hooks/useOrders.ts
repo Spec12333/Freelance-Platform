@@ -1,6 +1,7 @@
 // TanStack Query: useOrders(filters), useOrder(id), useCreateOrder, useUpdateOrder, useUpdateOrderStatus.
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { isAxiosError } from "axios";
 import {
   changeStatus,
   createOrder,
@@ -22,10 +23,18 @@ type UpdateOrderParams = {
 };
 
 // Fetch orders with filters and pagination.
-export const useOrders = (filters: OrderFilters = {}) => {
+export const useOrders = (
+  filters: OrderFilters = {},
+  { enabled = true }: { enabled?: boolean } = {},
+) => {
   return useQuery({
     queryKey: ["orders", "list", filters],
-    queryFn: () => getOrders(filters),
+    queryFn: ({ signal }) => getOrders(filters, signal),
+    // Keep the list mounted while a new search or page loads.
+    placeholderData: keepPreviousData,
+    staleTime: 30_000,
+    // Wait until URL filters are valid before making a request.
+    enabled,
   });
 };
 
@@ -34,6 +43,14 @@ export const useOrder = (id: number) => {
   return useQuery({
     queryKey: ["orders", "detail", id],
     queryFn: () => getOrder(id),
+    // Skip requests for invalid URL IDs.
+    enabled: Number.isSafeInteger(id) && id > 0,
+    // Missing orders and other client errors do not need automatic retries.
+    retry: (failureCount, error) => {
+      const status = isAxiosError(error) ? error.response?.status : undefined;
+      if (status !== undefined && status >= 400 && status < 500) return false;
+      return failureCount < 1;
+    },
   });
 };
 

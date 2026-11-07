@@ -79,7 +79,21 @@ Money is always bold: `$300` in `font-bold text-gray-900`.
 - Spacing: `space-y-5` inside forms, `space-y-8` between page sections.
 - Mobile first: everything works at 375px; two columns start at `lg:`.
 - One primary button per view.
+- The order marketplace uses a full-width white search panel with a prominent
+  search action, labelled filter dropdowns, removable filter chips and a reset
+  control. Keep the title and results count above the panel, separate from fields.
+- Search fields use a soft gray surface, a visible green focus ring and an
+  inset action button. Native select arrows are replaced with our chevron icon.
+- Filters follow the same order in code and UI: search, status, category,
+  budget, then pagination. Budget uses two dollar-prefixed fields and a separate
+  Apply budget button; show validation below them and a removable applied-range chip.
 - Avatars without an image: initials on `bg-brand-100 text-brand-800`.
+- Order details use a wide description card and a narrower sidebar for the
+  budget, project facts and client. Stack the cards on mobile, preserve line
+  breaks in descriptions and keep a link to the orders list in every state.
+- Order editing uses labelled fields grouped into project details, then budget
+  and deadline. A compact sidebar shows the published project. Put Cancel and
+  Save changes in the form footer; show field errors next to their controls.
 
 ## Status badges
 
@@ -101,6 +115,9 @@ Money is always bold: `$300` in `font-bold text-gray-900`.
 - **Errors**: field errors in `.field-error`, server errors in `.alert-error`
   with `role="alert"`, showing the server's `message`.
 - **Loading**: a centered spinner for pages; a disabled button for mutations.
+- **Order search**: input updates immediately; URL and query update after a
+  400 ms pause. Keep previous cards visible with a small updating indicator;
+  disable pagination while typing or showing previous query results.
 - **Empty lists**: a white card with a neutral inbox icon, centered title and
   description, and an optional primary action supplied by the parent.
 - **Focus**: every interactive element shows a ring on keyboard focus — the
@@ -117,4 +134,10 @@ Money is always bold: `$300` in `font-bold text-gray-900`.
 | `components/ui/Spinner.tsx` | Centered green loading ring with a text label; respects reduced motion |
 | `components/ui/ErrorMessage.tsx` | White error card, red alert icon and server message, optional green retry button |
 | `components/ui/EmptyState.tsx` | Empty list card with `title`, optional `description`, and `action: { label, onClick }` |
+| `components/ui/Pagination.tsx` | White navigation panel, green current page, numbered desktop buttons and compact mobile page count; hidden for a single page |
 | `components/StatusBadge.tsx` | Order or proposal status pill; labels and colours come from `utils/constants.ts` |
+| `components/OrderCard.tsx` | Responsive order card with a linked title, category, status, budget, deadline, proposal count and client rating; receives `order` via props |
+| `components/OrderFilters.tsx` | Search form, status/category dropdowns, active filter chips and reset; receives values and callbacks from the page |
+| `pages/Orders.tsx` | Marketplace header, total count and latest orders in a two-column desktop grid; the header stays visible during loading, empty and error states |
+| `pages/OrderDetails.tsx` | Project brief with status and dates, budget and facts sidebar, client initials and rating; loading, retry and order-not-found states |
+| `pages/EditOrder.tsx` | Prefilled order form with category selection, local deadline input, field errors and a disabled save state while submitting |
