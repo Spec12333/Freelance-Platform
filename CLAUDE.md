@@ -24,6 +24,8 @@ placeholder comment each; that is intentional.
 Backend: Node + Express 5, Sequelize + PostgreSQL, Joi, jsonwebtoken, bcrypt,
 cors, morgan, dotenv, swagger-ui-express + yaml (serves `backend/openapi.yaml`). **CommonJS** (`require` / `module.exports`, never `import`
 or `export`); requires are written without the `.js` extension.
+Chat uses Socket.IO over WebSocket on the API server; REST saves messages and
+loads history, while authenticated room events refresh the frontend cache.
 
 Frontend: React 18 + **TypeScript** (strict), Vite, react-router-dom, Zustand,
 TanStack Query, axios, **Tailwind CSS v4** via `@tailwindcss/vite` (no
@@ -104,6 +106,6 @@ cd frontend && npm run dev    # Vite, port 5173
 
 ## Out of scope
 
-Sockets (chat uses 5s polling by design), payments, file uploads, migrations,
-automated tests, email. Do not add them unasked — they belong in the README's
+Payments, file uploads, migrations, automated tests, email. Do not add them
+unasked — they belong in the README's
 "Future work" section.

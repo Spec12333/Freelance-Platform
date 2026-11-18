@@ -1,6 +1,8 @@
+const { createServer } = require('node:http');
 const { app } = require('./app');
 const { env } = require('./config/env');
 const { sequelize } = require('./models');
+const { attachChat } = require('./realtime/chat');
 
 const start = async () => {
   try {
@@ -13,7 +15,10 @@ const start = async () => {
     // lose data. Real migrations are listed as future work in the README.
     await sequelize.sync({ alter: !env.isProduction });
 
-    app.listen(env.port, () => {
+    // Express and Socket.IO share one port and HTTP server.
+    const server = createServer(app);
+    attachChat(server);
+    server.listen(env.port, () => {
       console.log(`API ready on http://localhost:${env.port}/api  (${env.nodeEnv})`);
     });
   } catch (error) {

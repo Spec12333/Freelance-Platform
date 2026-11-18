@@ -1,11 +1,5 @@
-// Freelancer directory: skills, hourly rate, rating.
+import WorkspacePlaceholder from "@/components/WorkspacePlaceholder";
 
 export default function Freelancers() {
-    return (
-        <div>
-            <h3>
-                Freelancers
-            </h3>
-        </div>
-    )
+  return <WorkspacePlaceholder title="Good people. Great possibilities." description="Find independent talent for your next idea, with skills and perspectives that make a difference." eyebrow="Your workspace" />;
 }

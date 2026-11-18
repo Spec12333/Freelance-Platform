@@ -39,7 +39,7 @@ export default function Register() {
 
   return (
     <AuthLayout>
-      <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-[32px]">
+      <h2 className="font-display text-[40px] leading-tight tracking-tight text-ink">
         Create your account
       </h2>
       <p className="mt-2 text-[15px] text-gray-500">

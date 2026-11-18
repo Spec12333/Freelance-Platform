@@ -133,7 +133,7 @@ export type Review = {
   updatedAt: string; // last change of the row; equals createdAt until the first update
 };
 
-// GET /freelancers/:id - a profile together with the latest reviews about it.
+// GET /freelancers/:id - latest 5 received reviews, sorted by createdAt DESC, id DESC.
 export type PublicProfile = User & {
   reviews: Review[];
 };

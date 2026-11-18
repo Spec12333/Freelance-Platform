@@ -3,22 +3,13 @@ const cors = require('cors');
 const morgan = require('morgan');
 const swaggerUi = require('swagger-ui-express');
 const { env } = require('./config/env');
+const { isAllowedOrigin } = require('./config/origins');
 const { openapiSpec } = require('./config/openapi');
 const routes = require('./routes');
 const { errorHandler } = require('./middleware/errorHandler');
 const { ApiError } = require('./utils/ApiError');
 
 const app = express();
-
-// Browsers send the literal string "null" as the Origin of file:// pages and
-// sandboxed frames, which is not a parseable URL.
-const isSameHost = (origin, host) => {
-  try {
-    return new URL(origin).host === host;
-  } catch {
-    return false;
-  }
-};
 
 app.use(
   // The per-request form of cors() is used because the decision needs the
@@ -29,7 +20,7 @@ app.use(
     // protects browsers, and those tools send no origin at all.
     // Allowed from this server's own host: Swagger UI at /api/docs is served
     // from here, and browsers attach an Origin header to its POST requests too.
-    if (!origin || env.clientUrls.includes(origin) || isSameHost(origin, req.get('host'))) {
+    if (isAllowedOrigin(origin, req.get('host'))) {
       return callback(null, { origin: true });
     }
     callback(ApiError.forbidden(`Origin ${origin} is not allowed by CORS`));

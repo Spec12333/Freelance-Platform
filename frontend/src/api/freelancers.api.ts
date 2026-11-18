@@ -11,8 +11,8 @@ export const getFreelancers = async (filters: FreelancerFilters) => {
   return result.data;
 };
 
-export const getFreelancer = async (id: number) => {
-  const result = await api.get<PublicProfile>(`/freelancers/${id}`);
+export const getFreelancer = async (id: number, signal?: AbortSignal) => {
+  const result = await api.get<PublicProfile>(`/freelancers/${id}`, { signal });
   return result.data;
 };
 
@@ -21,7 +21,7 @@ export const updateMyProfile = async (body: UpdateProfileBody) => {
   return result.data;
 };
 
-export const getFreelancersReviews = async (id: number, params ?: PaginationParams) => {
-  const result = await api.get<Paginated<Review>>(`/freelancers/${id}/reviews`, {params});
+export const getFreelancersReviews = async (id: number, params?: PaginationParams, signal?: AbortSignal) => {
+  const result = await api.get<Paginated<Review>>(`/freelancers/${id}/reviews`, { params, signal });
   return result.data;
 };

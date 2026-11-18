@@ -142,12 +142,12 @@ export default function CreateOrder() {
     <div className="space-y-7">
       {backLink}
 
-      <header className="flex flex-wrap items-end justify-between gap-4">
+      <header className="page-intro flex flex-wrap items-end justify-between gap-5">
         <div>
           <p className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-gray-500">
             <BriefcaseIcon className="size-4" /> Your workspace
           </p>
-          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+          <h1 className="page-title">
             Post a project
           </h1>
           <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-gray-500">

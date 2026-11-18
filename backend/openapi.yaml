@@ -55,6 +55,36 @@ tags:
   - name: Admin
     description: Everything here requires role `ADMIN`.
 
+x-socket-io:
+  path: /socket.io
+  origin: Same origin and HTTP server as the API
+  transports: [websocket]
+  auth:
+    type: object
+    required: [token, orderId]
+    additionalProperties: false
+    properties:
+      token: { type: string, description: JWT from login/register }
+      orderId: { type: integer, minimum: 1, maximum: 9007199254740991 }
+  access: Order client and assigned freelancer only, after assignment; origin and account checks apply
+  serverEvents:
+    chat:ready:
+      description: Authorized room joined; refetch latest REST history after every join/reconnect
+    message:new:
+      description: A message was saved through POST; refresh the latest page without polling
+      payload: { $ref: '#/components/schemas/Message' }
+    chat:error:
+      description: Session/access lost; connection is closed
+      payload:
+        type: object
+        required: [status, message]
+        properties:
+          status: { type: integer }
+          message: { type: string }
+  errors: connect_error.data contains status and message; 400/401/403/404/409/500 follow docs/API.md
+  delivery: Database persistence is through REST; missed events are recovered by refetching on reconnect
+  deployment: One backend instance with the in-memory adapter; reverse proxy must forward WebSocket upgrades
+
 paths:
   # --- Auth ------------------------------------------------------------------
   /auth/register:
@@ -504,8 +534,8 @@ paths:
 
         **Page 1 holds the most recent messages, and the items inside a page are
         in chronological order.** Render a page as it comes (newest at the
-        bottom) and request page 2 for older history. Poll page 1 every few
-        seconds to receive new messages.
+        bottom) and request page 2 for older history. Subscribe to Socket.IO
+        `message:new` events to refresh page 1; see `x-socket-io` for the contract.
 
         On an order without an assigned freelancer the list is simply empty.
 
@@ -665,7 +695,7 @@ paths:
     get:
       tags: [Freelancers]
       summary: A public profile
-      description: Works for any user, clients included. Comes with the latest 5 reviews about them.
+      description: Works for any user, clients included. Comes with the latest 5 received reviews, ordered by createdAt DESC then id DESC.
       responses:
         '200':
           description: The profile
@@ -681,7 +711,7 @@ paths:
     get:
       tags: [Freelancers]
       summary: All reviews about a user
-      description: Public. Reviews where `targetId` is this user, newest first.
+      description: Public. Reviews where `targetId` is this user, ordered by createdAt DESC then id DESC.
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/Limit'

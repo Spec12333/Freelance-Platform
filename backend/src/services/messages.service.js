@@ -51,4 +51,4 @@ const create = async (user, orderId, { body }) => {
   return Message.findByPk(message.id, { include: messageInclude });
 };
 
-module.exports = { list, create };
+module.exports = { loadOrderForChat, list, create };

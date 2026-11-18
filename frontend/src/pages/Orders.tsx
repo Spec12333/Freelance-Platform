@@ -188,33 +188,33 @@ export default function Orders() {
   // Keep the page heading visible while the list loads or shows an error.
   const header = (
     <div className="space-y-7">
-      <header className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+      <header className="relative flex flex-col gap-8 overflow-hidden rounded-3xl bg-brand-950 p-7 text-white sm:flex-row sm:items-end sm:justify-between sm:p-10">
         <div className="min-w-0 max-w-2xl">
-          <p className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-gray-500">
+          <p className="mb-5 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-lime">
             <BriefcaseIcon className="size-4" />
             Freelance marketplace
           </p>
-          <h1 className="text-3xl leading-tight font-extrabold tracking-tight text-gray-900 sm:text-4xl lg:text-[42px]">
-            Great work starts here<span className="text-brand-600">.</span>
+          <h1 className="max-w-xl font-display text-5xl leading-[1.04] tracking-tight sm:text-6xl lg:text-[68px]">
+            Great work.<br /><span className="text-lime">Your next chapter.</span>
           </h1>
-          <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-gray-500">
+          <p className="mt-5 max-w-md text-sm leading-relaxed text-white/70">
             Big ideas. Clear briefs. Find the project that brings out your best.
           </p>
         </div>
 
         {data && !isError && (
-          <div className="flex shrink-0 items-center gap-4 rounded-2xl border border-gray-200 bg-white px-5 py-4 sm:mb-1">
+          <div className="flex shrink-0 items-center gap-4 rounded-2xl border border-white/15 bg-white/5 px-5 py-5 sm:mb-1">
             <span
-              className="grid size-11 place-items-center rounded-xl bg-brand-50 text-brand-700"
+              className="grid size-11 place-items-center rounded-full bg-lime text-brand-950"
               aria-hidden="true"
             >
               <BriefcaseIcon className="size-5" />
             </span>
             <div>
-              <p className="text-3xl leading-none font-extrabold tracking-tight text-gray-900">
+              <p className="font-display text-4xl leading-none tracking-tight text-white">
                 {data.total}
               </p>
-              <p className="mt-1.5 text-xs font-medium text-gray-500">
+              <p className="mt-2 text-xs font-medium text-white/65">
                 {isPlaceholderData
                   ? "Updating results…"
                   : hasActiveFilters

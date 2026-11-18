@@ -5,6 +5,10 @@ import { useDeleteOrder, useOrder } from "@/hooks/useOrders";
 import { getErrorMessage } from "@/api/client";
 import StatusBadge from "@/components/StatusBadge";
 import MyProposal from "@/components/MyProposal";
+import OrderProposals from "@/components/OrderProposals";
+import OrderActions from "@/components/OrderActions";
+import OrderChat from "@/components/OrderChat";
+import OrderReviews from "@/components/OrderReviews";
 import EmptyState from "@/components/ui/EmptyState";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import Spinner from "@/components/ui/Spinner";
@@ -146,7 +150,7 @@ export default function OrderDetails() {
               </div>
 
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <h1 className="min-w-0 flex-1 text-2xl leading-tight font-extrabold tracking-tight text-gray-900 [overflow-wrap:anywhere] sm:text-3xl lg:text-[34px]">
+                <h1 className="min-w-0 flex-1 font-display text-4xl leading-[1.1] tracking-tight text-ink [overflow-wrap:anywhere] sm:text-[46px]">
                   {order.title}
                 </h1>
                 {canEdit && (
@@ -174,7 +178,7 @@ export default function OrderDetails() {
             <section aria-labelledby="project-description" className="p-6 sm:p-8">
               <h2
                 id="project-description"
-                className="text-lg font-bold tracking-tight text-gray-900"
+                className="font-display text-2xl tracking-tight text-ink"
               >
                 About the project
               </h2>
@@ -195,6 +199,17 @@ export default function OrderDetails() {
             </footer>
           </article>
 
+          <OrderReviews key={`reviews-${currentUser?.id}-${order.id}`} order={order} />
+
+          <OrderChat key={`chat-${currentUser?.id}-${order.id}`} order={order} />
+
+          <OrderProposals
+            key={`proposals-${currentUser?.id}-${order.id}`}
+            orderId={order.id}
+            clientId={order.clientId}
+            orderStatus={order.status}
+          />
+
           {canViewMyProposal && (
             <MyProposal
               key={`${currentUser?.id}-${order.id}`}
@@ -205,6 +220,8 @@ export default function OrderDetails() {
         </div>
 
         <aside aria-label="Project information" className="min-w-0 space-y-6">
+          <OrderActions key={`actions-${currentUser?.id}-${order.id}`} order={order} />
+
           {/* Budget and project facts. */}
           <section aria-labelledby="project-budget" className="card p-6">
             <div className="flex items-center justify-between gap-3">
@@ -221,7 +238,7 @@ export default function OrderDetails() {
                 <BriefcaseIcon className="size-4" />
               </span>
             </div>
-            <p className="mt-3 text-4xl font-extrabold tracking-tight text-gray-900 [overflow-wrap:anywhere]">
+            <p className="mt-3 font-display text-5xl tracking-tight text-ink [overflow-wrap:anywhere]">
               {formatMoney(order.budget)}
             </p>
             <p className="mt-2 text-xs text-gray-500">
@@ -291,7 +308,7 @@ export default function OrderDetails() {
             </div>
             <div className="mt-5 flex items-center gap-2 border-t border-gray-100 pt-4 text-sm">
               <StarIcon
-                className={`size-4 shrink-0 ${order.client.rating === null ? "text-gray-300" : "text-amber-400"}`}
+                className={`size-4 shrink-0 ${order.client.rating === null ? "text-gray-300" : "text-brand-600"}`}
               />
               <span className="font-semibold text-gray-800">
                 {formatRating(order.client.rating)}

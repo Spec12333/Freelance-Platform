@@ -1,11 +1,5 @@
-// Own profile: edit bio, skills, hourly rate, portfolio link.
+import WorkspacePlaceholder from "@/components/WorkspacePlaceholder";
 
 export default function MyProfile() {
-    return (
-        <div>
-            <h3>
-                My Profile
-            </h3>
-        </div>
-    )
+  return <WorkspacePlaceholder title="Make your skills stand out." description="Tell your story and show future collaborators what you bring to the table." eyebrow="Your workspace" />;
 }

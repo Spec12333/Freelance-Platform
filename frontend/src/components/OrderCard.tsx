@@ -11,15 +11,15 @@ type OrderCardProps = {
 // Present an order; fetching and actions belong to the parent page.
 export default function OrderCard({ order }: OrderCardProps) {
   return (
-    <article className="card min-w-0 p-5 transition-[border-color,box-shadow] duration-200 hover:border-brand-300 hover:shadow-[0_8px_24px_-12px_rgb(5_51_33/0.2)] motion-reduce:transition-none sm:p-6">
+    <article className="group/card card min-w-0 p-6 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-[0_12px_30px_-20px_rgb(21_44_25/0.25)] motion-reduce:transform-none motion-reduce:transition-none sm:p-7">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="min-w-0 break-words text-xs font-semibold text-gray-500">
+        <p className="min-w-0 rounded-full bg-cream px-3 py-1.5 text-[10px] font-semibold text-gray-600 [overflow-wrap:anywhere]">
           {order.category.name}
         </p>
         <StatusBadge status={order.status} />
       </div>
 
-      <h2 className="mt-4 text-lg font-bold leading-snug tracking-tight text-gray-900 sm:text-xl">
+      <h2 className="mt-5 text-xl font-semibold leading-snug tracking-tight text-gray-900 sm:text-[22px]">
         <Link
           to={`/orders/${order.id}`}
           className="group rounded-md break-words outline-none transition hover:text-brand-700 focus-visible:ring-4 focus-visible:ring-brand-600/20"
@@ -36,7 +36,7 @@ export default function OrderCard({ order }: OrderCardProps) {
       <dl className="mt-6 grid grid-cols-2 gap-x-5 gap-y-4 sm:grid-cols-3">
         <div>
           <dt className="text-xs font-medium text-gray-500">Budget</dt>
-          <dd className="mt-1 text-xl font-bold tracking-tight text-gray-900">
+          <dd className="mt-1 font-display text-[28px] tracking-tight text-gray-900">
             {formatMoney(order.budget)}
           </dd>
         </div>
@@ -70,7 +70,7 @@ export default function OrderCard({ order }: OrderCardProps) {
           <div className="min-w-0">
             <p className="break-words text-sm font-semibold text-gray-800">{order.client.name}</p>
             <p className="mt-0.5 flex items-center gap-1 text-xs text-gray-500">
-              {order.client.rating !== null && <StarIcon className="size-3.5 text-amber-400" />}
+              {order.client.rating !== null && <StarIcon className="size-3.5 text-brand-600" />}
               <span>
                 {order.client.rating !== null && <span className="sr-only">Client rating: </span>}
                 {formatRating(order.client.rating)}

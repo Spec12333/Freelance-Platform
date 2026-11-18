@@ -194,10 +194,45 @@ Concurrent accepts on one order are serialized; only one wins.
 | POST | `/orders/:id/messages` | same two | `body` (1-2000) → 201 `message`. 409 while no freelancer is assigned |
 
 **Page 1 holds the most recent messages; inside a page they are in chronological
-order.** Render a page as it comes (newest at the bottom), poll page 1 every 5
-seconds for new messages, request page 2 for older history. 403 for everyone
+order.** Render a page as it comes (newest at the bottom) and request page 2 for
+older history. Refresh page 1 on Socket.IO events, not on a timer. 403 for everyone
 else, including freelancers whose proposals were rejected. On an order with no
 freelancer the list is empty.
+
+### Live chat (Socket.IO)
+
+Connect to the API origin, path `/socket.io`, using `socket.io-client` with
+`transports: ["websocket"]` and `auth: { token, orderId }`. This is Socket.IO's
+protocol over WebSocket, not a raw WebSocket endpoint. The HTTP server/port is
+shared with Express. An optional frontend `VITE_SOCKET_URL` overrides the origin.
+
+The handshake validates the payload, JWT, current account and project participation.
+Only the order's client and assigned freelancer can connect, after assignment.
+The server joins the connection to `order:<id>`; clients cannot choose arbitrary
+rooms. Browser origins follow the same allowlist as REST.
+
+| Server event | Payload | Meaning |
+|---|---|---|
+| `chat:ready` | none | Authorized room joined; reload latest messages to recover missed events |
+| `message:new` | `Message` | A POST saved a message; refresh the latest page, mark older pages stale |
+| `chat:error` | `{ status, message }` | Access/session lost; stop live updates and hide private data on 4xx |
+
+Handshake rejection uses Socket.IO `connect_error`, with `{ status, message }`
+in `error.data`: 400 invalid payload, 401 invalid/expired JWT or missing user,
+403 blocked/non-participant, 404 missing order, 409 no assigned freelancer.
+Unexpected failures return 500 without internal details. Expired connections
+are closed; blocking an account disconnects its current chat connections.
+Accounts and participants are checked again before message delivery.
+
+Sending stays on `POST /orders/:id/messages`, with the existing validation and
+database persistence. A live delivery failure does not undo a saved message.
+No client message-sending socket event exists. On reconnect/rejoin, fetch REST
+history because delivery while disconnected is not guaranteed. Repeated events
+refresh the same query rather than appending duplicate messages. Completed and
+cancelled orders remain accessible to their participants if a freelancer exists.
+
+The in-memory room adapter supports one backend instance. Multiple instances
+would need a shared adapter and cross-instance domain events.
 
 ## Reviews
 
@@ -221,6 +256,9 @@ participant, and no review in `GET /orders/:id/reviews` has your `authorId`.
 | GET | `/freelancers` | public | Paginated, blocked excluded. Filters `search` (name), `skill`, `minRate`, `maxRate`, `sort` (`rating` default — best first, unrated last; `rate` — cheapest first) |
 | GET | `/freelancers/:id` | public | `User` + `reviews` (latest 5). Works for any user, clients included |
 | PATCH | `/freelancers/me` | FREELANCER | Any of `bio`, `skills`, `hourlyRate`, `portfolioUrl`, `avatarUrl` → `user` (with email). `null` or `""` clears a field; skills are lowercased |
+
+The embedded latest reviews and paginated received reviews both sort by
+`createdAt DESC, id DESC`, so equal timestamps keep a stable page order.
 
 ## Dashboard
 

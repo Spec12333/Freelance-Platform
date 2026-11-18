@@ -58,7 +58,8 @@ const listByUser = async (userId, query) => {
   const result = await Review.findAndCountAll({
     where: { targetId: userId },
     include: reviewInclude,
-    order: [['createdAt', 'DESC']],
+    // IDs break timestamp ties so pages and the embedded preview stay aligned.
+    order: [['createdAt', 'DESC'], ['id', 'DESC']],
     limit: pagination.limit,
     offset: pagination.offset,
   });
@@ -67,6 +68,6 @@ const listByUser = async (userId, query) => {
 
 // Latest few, for the profile page.
 const latestForUser = (userId, limit = 5) =>
-  Review.findAll({ where: { targetId: userId }, include: reviewInclude, order: [['createdAt', 'DESC']], limit });
+  Review.findAll({ where: { targetId: userId }, include: reviewInclude, order: [['createdAt', 'DESC'], ['id', 'DESC']], limit });
 
 module.exports = { create, listByOrder, listByUser, latestForUser };

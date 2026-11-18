@@ -79,9 +79,10 @@ with reviews, `MyProfile` edit form.
 **Reviews.** `StarRating` (read-only and input), `ReviewForm` shown only when the
 order is `COMPLETED`, you are a participant and have not reviewed yet.
 
-**Chat.** `MessageList` + `MessageInput`, `refetchInterval: 5000`, own messages
-on one side, auto-scroll to the bottom. Polling is a deliberate MVP choice;
-sockets are future work.
+**Chat.** `OrderChat` + `MessageList` + `MessageInput`, Socket.IO over WebSocket,
+own messages on one side, scrolling that preserves the reading position. REST
+saves messages and loads history; events refresh the latest page. Reconnect,
+rejoin and fetch missed messages. JWT and participant checks protect subscriptions.
 
 **Dashboard.** Three views switched on `role`, with the counters and recent /
 active orders.
@@ -103,7 +104,7 @@ full day — CORS, environment variables and SSL always take longer than expecte
 Run the seed against the production database.
 
 **README.** Description, stack, screenshots, setup, demo accounts, "Future work"
-(migrations, sockets, payments, email, file uploads, tests).
+(migrations, payments, email, file uploads, tests).
 
 **Rehearsal.** A timed walk through the demo flow with the seed accounts.
 

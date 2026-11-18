@@ -24,10 +24,27 @@ type UpdateProposalParams = {
 };
 
 // Fetch an order's proposals and mark them as viewed.
-export const useGetProposals = (id: number) => {
+export const useGetProposals = (
+  id: number,
+  { enabled = true }: { enabled?: boolean } = {},
+) => {
+  const client = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.id);
+  const role = useAuthStore((state) => state.user?.role);
+  const token = useAuthStore((state) => state.token);
+
   return useQuery({
-    queryKey: ["proposals", "detail", id],
-    queryFn: () => getProposals(id),
+    // Keep private proposal lists separate for each signed-in user.
+    queryKey: ["proposals", "detail", id, userId],
+    queryFn: async () => {
+      const proposals = await getProposals(id);
+      // GET marks proposals viewed; refresh the counter in the background.
+      void client.invalidateQueries({ queryKey: ["dashboard", userId] });
+      return proposals;
+    },
+    // The parent enables the request only for the order's author.
+    enabled: enabled && Boolean(token && userId && role === "CLIENT")
+      && Number.isSafeInteger(id) && id > 0,
   });
 };
 
@@ -98,13 +115,24 @@ export const useDeleteProposal = () => {
 };
 
 // Accept a proposal and assign the freelancer.
-export const useAcceptProposal = (id: number) => {
+export const useAcceptProposal = () => {
   const client = useQueryClient();
 
   return useMutation({
-    mutationFn: () => acceptProposal(id),
+    mutationFn: acceptProposal,
 
-    onSuccess: async () => {
+    onError: async (error) => {
+      if (!isAxiosError(error) || ![404, 409].includes(error.response?.status ?? 0)) return;
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ["proposals"] }),
+        client.invalidateQueries({ queryKey: ["orders"] }),
+        client.invalidateQueries({ queryKey: ["dashboard"] }),
+      ]);
+    },
+
+    onSuccess: async ({ order }) => {
+      // Hide selection actions immediately using the server's updated order.
+      client.setQueryData(["orders", "detail", order.id], order);
       await Promise.all([
         client.invalidateQueries({ queryKey: ["proposals"] }),
         client.invalidateQueries({ queryKey: ["orders"] }),

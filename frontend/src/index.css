@@ -3,22 +3,40 @@
 
 @theme {
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: Georgia, "Times New Roman", serif;
+  --color-paper: #f7f8f3;
+  --color-cream: #f2f4e9;
+  --color-ink: #182118;
+  --color-lime: #d5f27d;
 
   /* Brand green: the action colour (primary buttons, links, selected state). */
-  --color-brand-50: #ecfdf3;
-  --color-brand-100: #d1fadf;
-  --color-brand-200: #a6f4c5;
-  --color-brand-300: #6ce9a6;
-  --color-brand-400: #32d583;
-  --color-brand-500: #12b76a;
-  --color-brand-600: #039855;
-  --color-brand-700: #027a48;
-  --color-brand-800: #05603a;
-  --color-brand-900: #054f31;
-  --color-brand-950: #053321;
+  --color-brand-50: #f1f8e9;
+  --color-brand-100: #e1f0d0;
+  --color-brand-200: #c3e2a1;
+  --color-brand-300: #a0d466;
+  --color-brand-400: #78bd38;
+  --color-brand-500: #42a516;
+  --color-brand-600: #108a00;
+  --color-brand-700: #146b08;
+  --color-brand-800: #1a5112;
+  --color-brand-900: #1c3c18;
+  --color-brand-950: #152c19;
 
-  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.06);
-  --shadow-float: 0 24px 48px -12px rgb(5 51 33 / 0.45);
+  /* Warm neutrals keep existing utility classes consistent across every page. */
+  --color-gray-50: #f7f8f3;
+  --color-gray-100: #edf0e7;
+  --color-gray-200: #dfe4d8;
+  --color-gray-300: #bbc5b2;
+  --color-gray-400: #697460;
+  --color-gray-500: #59684e;
+  --color-gray-600: #46533d;
+  --color-gray-700: #33402e;
+  --color-gray-800: #253020;
+  --color-gray-900: #182118;
+  --color-gray-950: #10190e;
+
+  --shadow-card: 0 2px 0 rgb(24 33 24 / 0.025);
+  --shadow-float: 0 24px 64px -20px rgb(21 44 25 / 0.3);
 }
 
 @layer base {
@@ -28,7 +46,7 @@
   }
 
   body {
-    background-color: var(--color-gray-50);
+    background-color: var(--color-paper);
     color: var(--color-gray-900);
   }
 
@@ -42,6 +60,18 @@
 /* Shared classes for repeated pieces of UI. Utilities written next to them
    in the markup win, so `class="input pl-11"` works as expected. */
 @layer components {
+  .eyebrow {
+    @apply text-[10px] font-bold uppercase tracking-[0.18em];
+  }
+
+  .page-title {
+    @apply font-display text-4xl leading-[1.08] font-normal tracking-tight text-ink sm:text-5xl;
+  }
+
+  .page-intro {
+    @apply rounded-3xl border border-gray-200 bg-white p-6 sm:p-8;
+  }
+
   .card {
     @apply rounded-2xl border border-gray-200 bg-white shadow-card;
   }
@@ -60,8 +90,8 @@
   }
 
   .input {
-    @apply block h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-[15px] text-gray-900 shadow-xs transition outline-none;
-    @apply placeholder:text-gray-400 hover:border-gray-400 focus:border-brand-600 focus:ring-4 focus:ring-brand-600/15;
+    @apply block h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-[15px] text-gray-900 transition outline-none;
+    @apply placeholder:text-gray-400 hover:border-gray-400 focus:border-brand-600 focus:ring-2 focus:ring-brand-600/15;
     @apply disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500;
   }
 
@@ -80,7 +110,7 @@
 
   /* Buttons: .btn plus one variant, optionally one size. */
   .btn {
-    @apply inline-flex h-11 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold whitespace-nowrap transition;
+    @apply inline-flex h-11 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold whitespace-nowrap transition;
     @apply outline-none focus-visible:ring-4 active:translate-y-px disabled:pointer-events-none disabled:opacity-60;
   }
 

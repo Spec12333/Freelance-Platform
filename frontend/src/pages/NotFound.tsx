@@ -32,14 +32,14 @@ export default function NotFound({ code = 404, inline = false }: NotFoundProps) 
     <div className="w-full max-w-lg text-center">
       <p
         aria-hidden="true"
-        className={`bg-linear-to-b from-brand-600 to-brand-300 bg-clip-text leading-none font-extrabold tracking-tighter text-transparent select-none ${
+        className={`font-display leading-none tracking-tighter text-brand-600 select-none ${
           inline ? "text-[88px] sm:text-[120px]" : "text-[120px] sm:text-[168px]"
         }`}
       >
         {code}
       </p>
 
-      <h1 className="mt-6 text-3xl font-extrabold tracking-tight text-gray-900 sm:text-[32px]">{title}</h1>
+      <h1 className="mt-6 font-display text-4xl tracking-tight text-ink">{title}</h1>
       <p className="mx-auto mt-3 max-w-md text-[15px] text-gray-500">{text}</p>
 
       <div className="mt-8 flex flex-col-reverse justify-center gap-3 sm:flex-row">
@@ -63,7 +63,7 @@ export default function NotFound({ code = 404, inline = false }: NotFoundProps) 
       <section className="card relative flex items-center justify-center overflow-hidden px-6 py-16 sm:py-20">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -top-40 left-1/2 size-[28rem] -translate-x-1/2 rounded-full bg-brand-100/70 blur-3xl"
+          className="pointer-events-none absolute -top-56 left-1/2 size-[28rem] -translate-x-1/2 rounded-full border border-brand-200/60"
         />
         <div className="relative w-full max-w-lg">{body}</div>
       </section>
@@ -72,18 +72,8 @@ export default function NotFound({ code = 404, inline = false }: NotFoundProps) 
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden bg-gray-50 px-5 py-6 sm:px-10 lg:py-8">
-      {/* Decoration: a soft brand glow and a dot grid fading out downwards. */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-56 left-1/2 size-[40rem] -translate-x-1/2 rounded-full bg-brand-200/50 blur-3xl" />
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: "radial-gradient(rgb(5 51 33 / 0.08) 1px, transparent 1px)",
-            backgroundSize: "22px 22px",
-            maskImage: "linear-gradient(to bottom, black, transparent 70%)",
-          }}
-        />
-      </div>
+      {/* Restrained outlines echo the marketplace's editorial style. */}
+      <div aria-hidden="true" className="pointer-events-none absolute -right-40 -bottom-40 size-[36rem] rounded-full border border-brand-200/70"><div className="absolute inset-10 rounded-full border border-brand-200/70" /></div>
 
       <Link to="/" className="relative self-start rounded-xl outline-none focus-visible:ring-4 focus-visible:ring-brand-600/30">
         <Logo />

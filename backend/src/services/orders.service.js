@@ -130,29 +130,29 @@ const participantRole = (order, userId) => {
 };
 
 const changeStatus = async (user, orderId, nextStatus) => {
-  const order = await Order.findByPk(orderId);
-  if (!order) throw ApiError.notFound('Order not found');
-
-  const role = participantRole(order, user.id);
-  if (!role) throw ApiError.forbidden('Only the participants of this order can change its status');
-
-  const allowedRole = TRANSITIONS[order.status][nextStatus];
-
-  // Not a legal move from the current status at all -> 409, naming the status
-  // so the UI can show why.
-  if (!allowedRole) {
-    if (order.status === OPEN && nextStatus === IN_PROGRESS) {
-      throw ApiError.conflict('An order moves to IN_PROGRESS only when a proposal is accepted');
-    }
-    throw ApiError.conflict(`Cannot change status from ${order.status} to ${nextStatus}`);
-  }
-
-  // A legal move, but made by the wrong side -> 403.
-  if (allowedRole !== role) {
-    throw ApiError.forbidden(`Only the order ${allowedRole} can move it to ${nextStatus}`);
-  }
-
   await sequelize.transaction(async (transaction) => {
+    // Share the order lock used by proposal acceptance, editing and deletion.
+    // Check the current status only after acquiring it, so concurrent actions
+    // cannot apply a transition based on an outdated status.
+    const order = await Order.findByPk(orderId, { transaction, lock: transaction.LOCK.UPDATE });
+    if (!order) throw ApiError.notFound('Order not found');
+
+    const role = participantRole(order, user.id);
+    if (!role) throw ApiError.forbidden('Only the participants of this order can change its status');
+
+    const allowedRole = TRANSITIONS[order.status][nextStatus];
+
+    // Unknown transitions return 409; a legal move by the wrong side returns 403.
+    if (!allowedRole) {
+      if (order.status === OPEN && nextStatus === IN_PROGRESS) {
+        throw ApiError.conflict('An order moves to IN_PROGRESS only when a proposal is accepted');
+      }
+      throw ApiError.conflict(`Cannot change status from ${order.status} to ${nextStatus}`);
+    }
+    if (allowedRole !== role) {
+      throw ApiError.forbidden(`Only the order ${allowedRole} can move it to ${nextStatus}`);
+    }
+
     await order.update({ status: nextStatus }, { transaction });
 
     // Cancelling an OPEN order closes the pending proposals with it, otherwise
@@ -165,7 +165,7 @@ const changeStatus = async (user, orderId, nextStatus) => {
     }
   });
 
-  return getById(order.id);
+  return getById(orderId);
 };
 
 module.exports = {

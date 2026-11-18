@@ -143,12 +143,12 @@ export default function EditOrder() {
   return (
     <div className="space-y-7">
       {backLink}
-      <header className="flex flex-wrap items-end justify-between gap-4">
+      <header className="page-intro flex flex-wrap items-end justify-between gap-5">
         <div>
           <p className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-gray-500">
             <BriefcaseIcon className="size-4" /> Your workspace
           </p>
-          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">Edit your project</h1>
+          <h1 className="page-title">Edit your project</h1>
           <p className="mt-3 text-[15px] leading-relaxed text-gray-500">Fine-tune your brief so the right freelancers can find you.</p>
         </div>
         <span className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-500">Project #{order.id}</span>

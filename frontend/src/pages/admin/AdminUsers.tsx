@@ -1,11 +1,5 @@
-// Admin users: list + block/unblock.
+import WorkspacePlaceholder from "@/components/WorkspacePlaceholder";
 
 export default function AdminUsers() {
-    return (
-        <div>
-            <h3>
-                Admin Users
-            </h3>
-        </div>
-    )
+  return <WorkspacePlaceholder title="A community worth building." description="Keep the marketplace a productive place for clients and independent professionals." eyebrow="Admin workspace" />;
 }

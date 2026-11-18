@@ -11,8 +11,8 @@ export default function Logo({ variant = "dark", className = "" }: LogoProps) {
   return (
     <span className={`inline-flex items-center gap-2.5 ${className}`}>
       <span
-        className={`grid size-9 place-items-center rounded-xl shadow-sm ${
-          light ? "bg-white text-brand-700" : "bg-brand-600 text-white"
+        className={`grid size-9 place-items-center rounded-full ${
+          light ? "bg-lime text-brand-950" : "bg-brand-600 text-white"
         }`}
       >
         <svg viewBox="0 0 32 32" aria-hidden="true" className="size-6">
@@ -26,8 +26,8 @@ export default function Logo({ variant = "dark", className = "" }: LogoProps) {
           />
         </svg>
       </span>
-      <span className={`text-xl font-extrabold tracking-tight ${light ? "text-white" : "text-gray-900"}`}>
-        Freelance<span className={light ? "text-brand-300" : "text-brand-600"}>Hub</span>
+      <span className={`text-xl font-extrabold tracking-[-0.06em] ${light ? "text-white" : "text-gray-900"}`}>
+        Freelance<span className={light ? "text-lime" : "text-brand-600"}>Hub</span>
       </span>
     </span>
   );

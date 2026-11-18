@@ -31,7 +31,7 @@ export default function Login() {
 
   return (
     <AuthLayout>
-      <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-[32px]">
+      <h2 className="font-display text-[40px] leading-tight tracking-tight text-ink">
         Welcome back
       </h2>
       <p className="mt-2 text-[15px] text-gray-500">
@@ -111,15 +111,15 @@ export default function Login() {
           Demo accounts
         </p>
         <dl className="mt-3 space-y-2 text-sm">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
             <dt className="font-semibold text-gray-800">Client</dt>
-            <dd className="truncate font-mono text-xs text-gray-600">
+            <dd className="min-w-0 font-mono text-[11px] text-gray-600 [overflow-wrap:anywhere]">
               client@freelancehub.dev / client123
             </dd>
           </div>
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
             <dt className="font-semibold text-gray-800">Freelancer</dt>
-            <dd className="truncate font-mono text-xs text-gray-600">
+            <dd className="min-w-0 font-mono text-[11px] text-gray-600 [overflow-wrap:anywhere]">
               anna@freelancehub.dev / anna123
             </dd>
           </div>

@@ -6,6 +6,7 @@ type PaginationProps = {
   pages: number;
   onPageChange: (page: number) => void;
   disabled?: boolean;
+  ariaLabel?: string;
 };
 
 export default function Pagination({
@@ -13,6 +14,7 @@ export default function Pagination({
   pages,
   onPageChange,
   disabled = false,
+  ariaLabel = "Orders pagination",
 }: PaginationProps) {
   // Hide navigation only when there is no second page.
   if (pages <= 1) return null;
@@ -35,7 +37,7 @@ export default function Pagination({
   };
 
   return (
-    <nav aria-label="Orders pagination" className="card flex items-center justify-between gap-2 p-3 sm:gap-4 sm:p-4">
+    <nav aria-label={ariaLabel} className="card flex items-center justify-between gap-2 p-3 sm:gap-4 sm:p-4">
       <button
         type="button"
         disabled={disabled || page <= 1}

@@ -5,6 +5,7 @@ const { getPagination, buildPage } = require('../utils/pagination');
 const { slugify } = require('../utils/slugify');
 const { privateUserAttributes } = require('./query.helpers');
 const usersService = require('./users.service');
+const { chatEvents } = require('../events/chat');
 
 // --- Users -----------------------------------------------------------------
 
@@ -39,6 +40,7 @@ const setBlocked = async (admin, userId, isBlocked) => {
   if (!user) throw ApiError.notFound('User not found');
 
   await user.update({ isBlocked });
+  if (isBlocked) chatEvents.emit('user:blocked', user.id);
   return usersService.getCurrentUser(user.id);
 };
 

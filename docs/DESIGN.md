@@ -6,9 +6,12 @@ covered here, add it here first.
 
 ## Character
 
-A clean marketplace in the spirit of Upwork and Fiverr: lots of white, one
-confident green for actions, bold headings, soft rounded cards. Green means
-"act here", so inside the app it is not used for decoration.
+A confident marketplace inspired by Upwork: warm paper backgrounds, white
+surfaces, charcoal text and a clear leaf green. Serif display headlines add
+character; body text stays in Plus Jakarta Sans. Use forest panels and lime
+accents sparingly for page introductions, with honest product content rather
+than decorative statistics. Controls are pill-shaped, borders crisp and shadows
+quiet. Keep the same visual language across auth, marketplace and workspace pages.
 
 ## Where the style lives
 
@@ -24,13 +27,15 @@ Everything else is plain Tailwind utilities in the markup.
 
 | Token | Use |
 |---|---|
-| `font-sans` — Plus Jakarta Sans | Everything. Loaded in `index.html` |
+| `font-sans` — Plus Jakarta Sans | Body, controls and compact headings. Loaded in `index.html` |
+| `font-display` — Georgia | Large page and editorial section headings |
+| `paper`, `cream`, `ink`, `lime` | Warm canvas, tinted panels, charcoal and restrained accent |
 | `brand-600` / hover `brand-700` | Primary buttons, links |
 | `brand-50` + `brand-600` border | Selected state |
 | `brand-950` | Dark brand surfaces (the auth side panel) |
 | Tailwind `gray-*` | Text and borders: headings `900`, body `700`, secondary `500`, placeholders `400`, borders `200`/`300` |
 | Tailwind `red-*` | Errors and destructive actions only |
-| Tailwind `amber-*` | Ratings (stars `amber-400`) and "new" highlights |
+| Tailwind `amber-*` | New highlights and waiting states; review stars use brand green |
 | `shadow-card` | Resting cards |
 | `shadow-float` | Things above the page: dropdowns, modals |
 
@@ -38,7 +43,8 @@ Everything else is plain Tailwind utilities in the markup.
 
 | Class | What |
 |---|---|
-| `.card` | White rounded panel with border and shadow. Add padding: `card p-5` |
+| `.card` | White rounded panel with a crisp warm border and quiet shadow. Add padding: `card p-5` |
+| `.eyebrow`, `.page-title`, `.page-intro` | Shared small uppercase label, serif page heading and introduction panel |
 | `.field-label` | Label above a field |
 | `.input` | Text input and `<select>`. Red automatically when `aria-invalid` is true |
 | `.input-icon` | Icon inside a field: wrap in `relative`, add `pl-11` to the input |
@@ -62,7 +68,7 @@ A field, as on Register:
 
 | Element | Classes |
 |---|---|
-| Page title | `text-3xl font-extrabold tracking-tight text-gray-900` |
+| Page title | `page-title`, or a larger `font-display` headline on a forest introduction |
 | Section title | `text-xl font-bold text-gray-900` |
 | Card title | `font-bold text-gray-900` |
 | Body | `text-[15px] text-gray-700` |
@@ -78,6 +84,13 @@ Money is always bold: `$300` in `font-bold text-gray-900`.
   for badges and avatars.
 - Spacing: `space-y-5` inside forms, `space-y-8` between page sections.
 - Mobile first: everything works at 375px; two columns start at `lg:`.
+- Navigation uses a white sticky header with an underlined active section,
+  round identity markers and pill actions. On phones, the menu scrolls in its
+  own row. The shared footer closes every workspace page.
+- Login/Register use a forest brand panel with a large serif headline and a
+  warm canvas around the white form. Marketplace introductions use the same
+  forest/lime palette. Unfinished sections have an honest Coming soon state
+  with a working link to projects, without fabricated data or enabled fake controls.
 - One primary button per view.
 - The order marketplace uses a full-width white search panel with a prominent
   search action, labelled filter dropdowns, removable filter chips and a reset
@@ -100,6 +113,30 @@ Money is always bold: `$300` in `font-bold text-gray-900`.
 - Proposal forms sit below the project brief. Use a dollar-prefixed price field,
   a cover-letter textarea and one Send proposal action. Keep the submitted form
   as a success card and show API validation messages next to the fields.
+- Client proposal cards show freelancer initials, a linked name, rating and
+  review count, then the offered price, sent date and full cover letter. Unseen
+  proposals use an amber New badge and border; status uses the shared badge.
+- The order author sees proposals below the brief, with a total count, unseen
+  count and a Refresh action. Keep the heading during loading, empty and error
+  states. Viewing the list refreshes the client's unseen-proposal counter.
+- Pending proposals on an open order have a Choose freelancer action. Confirm
+  the freelancer and offered price in the shared modal. Lock all selection
+  actions while accepting, then show the updated statuses and a success message.
+- Project participants see a progress card at the top of the details sidebar,
+  with the status, assigned freelancer and next step. Only the assigned freelancer
+  can submit work for review; the client can complete reviewed work or cancel an
+  open/in-progress project. Confirm transitions in the shared modal, keep errors
+  inside it and lock actions while saving. Cancellation keeps the project history.
+- Project chat sits below the brief and is private to the client and assigned
+  freelancer. Before assignment, the client sees an explanation. Use green own
+  messages on the right and white incoming messages on the left, with dates and
+  local times. Scroll inside the conversation, preserve the reading position on
+  incoming messages and offer a New messages shortcut. Socket.IO events refresh
+  the latest page; Older/Newer pages keep their reading position. Show the live
+  connection status without claiming the other participant is online. Rejoin and
+  reload missed messages after reconnecting. Keep loaded
+  messages on temporary failures, but hide them on access errors. Preserve drafts
+  on send failures and clear only after saving; messages allow 1-2000 characters.
 - Check the freelancer's existing proposal before showing the form. An existing
   proposal uses a read-only card with its price, status, sent date and letter,
   including when the order is no longer open. Show a spinner or retry card while
@@ -111,6 +148,21 @@ Money is always bold: `$300` in `font-bold text-gray-900`.
   Confirm permanent deletion in a native modal dialog with Cancel and Delete.
   Keep keyboard focus inside, restore it on close, and block dismissal while the
   request is pending. Keep errors inside the dialog so the user can retry.
+- Completed projects have an editorial feedback section: a forest introduction,
+  real review count, white divided review rows and a warm-tinted form. Green stars
+  are native radio inputs in edit mode and an accessible fractional star display
+  in read-only mode. Only a participant without a saved review sees the form,
+  after a successful fresh check. Never average the two reviews: they rate two
+  different people. Optional comments allow 500 characters; show errors inline
+  and keep drafts on failure. Published reviews replace the form immediately.
+- Public profiles use a forest cover, an overlapping circular avatar/initials,
+  a large serif name and real rating/member-since details. Below, pair biography,
+  skills and received reviews with a narrower rate/portfolio/action sidebar.
+  Respect client/admin profile roles, missing fields and blocked-account states;
+  do not invent availability or earned badges. Reuse the embedded five reviews
+  for page one, then load review pages from the API with the page in the URL.
+  Keep the profile visible if its review request fails and avoid showing another
+  user's previous reviews during navigation. Portfolio links open in a new tab.
 
 ## Status badges
 
@@ -157,8 +209,21 @@ Money is always bold: `$300` in `font-bold text-gray-900`.
 | `components/OrderCard.tsx` | Responsive order card with a linked title, category, status, budget, deadline, proposal count and client rating; receives `order` via props |
 | `components/OrderFilters.tsx` | Search form, status/category dropdowns, active filter chips and reset; receives values and callbacks from the page |
 | `components/ProposalForm.tsx` | Create or edit a proposal with shared validation, prefilled edit values, pending/error states and success confirmation |
+| `components/ProposalCard.tsx` | Stateless client-facing proposal card with freelancer details, price, letter, sent date, status and an unseen marker |
+| `components/OrderProposals.tsx` | Owner-only proposal list with totals, unseen highlights, refresh and loading/error/empty states |
+| `components/OrderActions.tsx` | Participant-only progress card with assigned freelancer, permitted status actions, confirmation and mutation feedback |
+| `components/OrderChat.tsx` | Private order conversation with live connection status, page navigation, access/loading/error states and REST message sending |
+| `components/MessageList.tsx` | Message bubbles, date separators, local times and scrolling that preserves the reading position |
+| `components/MessageInput.tsx` | Validated message draft with character count, pending/error states and reset after successful sending |
+| `components/StarRating.tsx` | Pure UI for fractional display ratings and keyboard-accessible native radio selection |
+| `components/ReviewList.tsx` | Supplied reviews with author, date, rating, comment and own-review marker |
+| `components/ReviewForm.tsx` | Validated rating/comment form with pending/error states and one-review submission |
+| `components/OrderReviews.tsx` | Completed-project feedback with participant eligibility, fresh duplicate check, public list and published state |
+| `components/ProfileReviews.tsx` | Received-review pagination seeded from the profile, with URL pages and local loading/error/empty states |
+| `components/WorkspacePlaceholder.tsx` | Shared branded, honest placeholder for sections whose functionality is pending |
 | `components/MyProposal.tsx` | Checks the current freelancer's proposal for an order; shows its details or the application form, with loading and retry states |
 | `pages/Orders.tsx` | Marketplace header, total count and latest orders in a two-column desktop grid; the header stays visible during loading, empty and error states |
 | `pages/OrderDetails.tsx` | Project brief with status and dates, budget and facts sidebar, client initials and rating; loading, retry and order-not-found states |
+| `pages/FreelancerProfile.tsx` | Role-aware public profile with biography, skills, rate, portfolio, received reviews and loading/retry/not-found states |
 | `pages/EditOrder.tsx` | Prefilled order form with category selection, local deadline input, field errors and a disabled save state while submitting |
 | `pages/CreateOrder.tsx` | Empty project form with category selection, budget and local deadline validation, API field errors and a link to the created order after publishing |

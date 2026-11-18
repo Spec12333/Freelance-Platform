@@ -1,11 +1,5 @@
-// Admin categories: table + create/rename/delete.
+import WorkspacePlaceholder from "@/components/WorkspacePlaceholder";
 
 export default function AdminCategories() {
-    return (
-        <div>
-            <h3>
-                Admin categories
-            </h3>
-        </div>
-    )
+  return <WorkspacePlaceholder title="A place for every kind of work." description="Organize the skills and services that connect great ideas with the right people." eyebrow="Admin workspace" />;
 }

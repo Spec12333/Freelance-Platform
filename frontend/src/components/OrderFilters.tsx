@@ -58,7 +58,7 @@ export default function OrdersFilters({
   const chipClass = "inline-flex max-w-full items-center gap-2 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-800 outline-none transition hover:bg-brand-100 focus-visible:ring-4 focus-visible:ring-brand-600/20";
 
   return (
-    <section aria-label="Search and filter orders" className="rounded-2xl border border-gray-200 bg-white p-4 shadow-[0_4px_24px_-8px_rgb(16_24_40/0.12)] sm:p-6">
+    <section aria-label="Search and filter orders" className="card p-5 sm:p-7">
       {/* 1. Search. */}
       <form
         role="search"
@@ -68,7 +68,7 @@ export default function OrdersFilters({
         }}
       >
         <label htmlFor="orders-search" className="sr-only">Search orders by title</label>
-        <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 p-2 transition focus-within:border-brand-600 focus-within:bg-white focus-within:ring-4 focus-within:ring-brand-600/10 sm:flex-nowrap">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-3xl border border-gray-200 bg-paper p-2 transition focus-within:border-brand-600 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-600/10 sm:flex-nowrap">
           <SearchIcon className="ml-2 size-5 shrink-0 text-gray-400 sm:ml-3" />
           <input
             id="orders-search"

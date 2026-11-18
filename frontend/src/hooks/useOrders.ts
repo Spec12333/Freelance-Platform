@@ -127,16 +127,27 @@ export const useDeleteOrder = () => {
 export const useUpdateOrderStatus = () => {
   const client = useQueryClient();
 
+  const refreshOrders = async () => {
+    await Promise.all([
+      client.invalidateQueries({ queryKey: ["orders"] }),
+      client.invalidateQueries({ queryKey: ["dashboard"] }),
+      client.invalidateQueries({ queryKey: ["proposals"] }),
+    ]);
+  };
+
   return useMutation({
     mutationFn: (data: ChangeStatusParams) =>
       changeStatus(data.id, data.status),
 
-    onSuccess: async () => {
-      await Promise.all([
-        client.invalidateQueries({ queryKey: ["orders"] }),
-        client.invalidateQueries({ queryKey: ["dashboard"] }),
-        client.invalidateQueries({ queryKey: ["proposals"] }),
-      ]);
+    // Another participant may have changed the project in another tab.
+    onError: async (error) => {
+      if (isAxiosError(error) && [403, 404, 409].includes(error.response?.status ?? 0)) await refreshOrders();
+    },
+
+    onSuccess: async (order) => {
+      // Use the confirmed status immediately, then refresh related lists.
+      client.setQueryData(["orders", "detail", order.id], order);
+      await refreshOrders();
     },
   });
 };

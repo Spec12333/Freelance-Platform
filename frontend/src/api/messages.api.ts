@@ -1,13 +1,13 @@
-// getMessages(orderId), sendMessage(orderId, body).
+// getMessages(orderId, page, signal), sendMessage(orderId, body).
 
 import type { Message } from "@/types/models";
 import api from "./client";
 import type { CreateMessageBody, Paginated } from "@/types/api";
 
-export const getMessages = async (orderId: number, page = 1) => {
+export const getMessages = async (orderId: number, page = 1, signal?: AbortSignal) => {
   const result = await api.get<Paginated<Message>>(
     `/orders/${orderId}/messages`,
-    { params: { page } },
+    { params: { page }, signal },
   );
   return result.data;
 };

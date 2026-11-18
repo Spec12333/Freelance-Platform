@@ -930,8 +930,13 @@ These are deliberate MVP choices, listed so nobody mistakes them for oversights:
 
 - **No migrations.** Tables come from `sync()`. Changing a column on a production
   database needs a real migration tool (sequelize-cli, umzug).
-- **Chat by polling.** The frontend asks for new messages every 5 seconds. Instant
-  delivery would need WebSockets.
+- **One chat server instance.** Socket.IO uses WebSocket transport on the same
+  HTTP server as Express (`/socket.io`). REST persists messages, then a domain
+  event notifies authorized room members. HTTP and socket authentication share
+  `session.service.js`; JWT expiry and account blocking close live connections.
+  Reconnecting clients reload history to recover missed events. Multiple backend
+  instances would need a shared room adapter and cross-instance domain events.
+  A reverse proxy must forward WebSocket upgrades; use HTTPS/WSS in production.
 - **No automated tests.** The API was verified with scripted end-to-end runs, but
   they are not part of the repository.
 - **Token in localStorage, no refresh tokens.** Simple and common for an MVP; a
