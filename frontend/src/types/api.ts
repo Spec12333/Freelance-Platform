@@ -78,6 +78,8 @@ export type CreateOrderBody = {
 // derived rather than copied: change CreateOrderBody and this follows.
 export type UpdateOrderBody = Partial<CreateOrderBody>;
 
+// DELETE /orders/:id returns 204; the API function uses Promise<void>.
+
 // PATCH /orders/:id/status. Which values are legal depends on the current
 // status and on who is asking - the transition table lives on the server and
 // is checked there; TypeScript can only promise that a valid status is sent.
@@ -89,8 +91,13 @@ export type UpdateOrderStatusBody = {
 
 export type CreateProposalBody = {
   price: number;
-  coverLetter: string;
+  coverLetter: string; // 5-3000 characters after trimming
 };
+
+// PATCH /proposals/:id changes only price and/or cover letter.
+export type UpdateProposalBody = Partial<CreateProposalBody>;
+
+// DELETE /proposals/:id returns 204; the API function uses Promise<void>.
 
 // POST /proposals/:id/accept changes two entities inside one transaction, so it
 // returns both: the accepted proposal and the order that is now IN_PROGRESS.

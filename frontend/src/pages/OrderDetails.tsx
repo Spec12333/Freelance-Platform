@@ -1,11 +1,14 @@
 import { isAxiosError } from "axios";
+import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { useOrder } from "@/hooks/useOrders";
+import { useDeleteOrder, useOrder } from "@/hooks/useOrders";
 import { getErrorMessage } from "@/api/client";
 import StatusBadge from "@/components/StatusBadge";
+import MyProposal from "@/components/MyProposal";
 import EmptyState from "@/components/ui/EmptyState";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import Spinner from "@/components/ui/Spinner";
+import Modal from "@/components/ui/Modal";
 import {
   ArrowLeftIcon,
   BriefcaseIcon,
@@ -25,10 +28,24 @@ export default function OrderDetails() {
   const isValidId = Number.isSafeInteger(orderId) && orderId > 0;
   const { data: order, isPending, isError, error, refetch } = useOrder(orderId);
   const currentUser = useAuthStore((state) => state.user);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const deleteOrder = useDeleteOrder();
   const canEdit =
     currentUser?.role === "CLIENT" &&
     currentUser.id === order?.clientId &&
     order.status === "OPEN";
+
+  // Navigate only after the server confirms deletion.
+  const handleDelete = async () => {
+    if (!order || !canEdit || deleteOrder.isPending) return;
+    try {
+      await deleteOrder.mutateAsync(order.id);
+      setIsDeleteOpen(false);
+      navigate("/orders", { replace: true });
+    } catch {
+      // The modal displays the mutation error and allows retry.
+    }
+  };
   const backLink = (
     <Link
       to="/orders"
@@ -94,6 +111,10 @@ export default function OrderDetails() {
     .join("")
     .toUpperCase();
 
+  // Freelancers can view their proposal even after the project closes.
+  const canViewMyProposal = currentUser?.role === "FREELANCER"
+    && currentUser.id !== order.clientId;
+
   return (
     <div className="space-y-6">
       <nav
@@ -110,70 +131,78 @@ export default function OrderDetails() {
       </nav>
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        {/* Project brief. */}
-        <article className="card min-w-0 overflow-hidden">
-          <header className="border-b border-gray-100 p-6 sm:p-8">
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-              <span className="inline-flex min-w-0 items-center gap-2 text-xs font-semibold text-gray-500">
-                <LayersIcon className="size-4 shrink-0" />
-                <span className="[overflow-wrap:anywhere]">
-                  {order.category.name}
+        <div className="min-w-0 space-y-6">
+          {/* Project brief. */}
+          <article className="card min-w-0 overflow-hidden">
+            <header className="border-b border-gray-100 p-6 sm:p-8">
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                <span className="inline-flex min-w-0 items-center gap-2 text-xs font-semibold text-gray-500">
+                  <LayersIcon className="size-4 shrink-0" />
+                  <span className="[overflow-wrap:anywhere]">
+                    {order.category.name}
+                  </span>
                 </span>
-              </span>
-              <StatusBadge status={order.status} />
-            </div>
+                <StatusBadge status={order.status} />
+              </div>
 
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <h1 className="min-w-0 flex-1 text-2xl leading-tight font-extrabold tracking-tight text-gray-900 [overflow-wrap:anywhere] sm:text-3xl lg:text-[34px]">
-                {order.title}
-              </h1>
-              {canEdit && (
-                <Link
-                  to={`/orders/${orderId}/edit`}
-                  className="btn btn-secondary shrink-0 self-start"
-                >
-                  Edit Order
-                </Link>
-              )}
-            </div>
-            <p className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500 sm:text-sm">
-              <CalendarIcon className="size-4 shrink-0 text-gray-400" />
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <h1 className="min-w-0 flex-1 text-2xl leading-tight font-extrabold tracking-tight text-gray-900 [overflow-wrap:anywhere] sm:text-3xl lg:text-[34px]">
+                  {order.title}
+                </h1>
+                {canEdit && (
+                  <div className="flex shrink-0 flex-wrap gap-2">
+                    <Link to={`/orders/${orderId}/edit`} className="btn btn-secondary">Edit Order</Link>
+                    <button type="button" onClick={() => { deleteOrder.reset(); setIsDeleteOpen(true); }} className="btn btn-danger">Delete project</button>
+                  </div>
+                )}
+              </div>
+              <p className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500 sm:text-sm">
+                <CalendarIcon className="size-4 shrink-0 text-gray-400" />
+                <span>
+                  Posted{" "}
+                  <time dateTime={order.createdAt}>
+                    {formatDate(order.createdAt)}
+                  </time>
+                </span>
+                <span aria-hidden="true" className="text-gray-300">
+                  ·
+                </span>
+                <span>Project #{order.id}</span>
+              </p>
+            </header>
+
+            <section aria-labelledby="project-description" className="p-6 sm:p-8">
+              <h2
+                id="project-description"
+                className="text-lg font-bold tracking-tight text-gray-900"
+              >
+                About the project
+              </h2>
+              {/* Preserve the client's paragraphs and line breaks. */}
+              <p className="mt-5 text-[15px] leading-7 whitespace-pre-wrap text-gray-600 [overflow-wrap:anywhere]">
+                {order.description}
+              </p>
+            </section>
+
+            <footer className="flex items-center gap-2 border-t border-gray-100 bg-gray-50/60 px-6 py-4 text-xs text-gray-500 sm:px-8">
+              <BriefcaseIcon className="size-4 shrink-0 text-gray-400" />
               <span>
-                Posted{" "}
-                <time dateTime={order.createdAt}>
-                  {formatDate(order.createdAt)}
+                Last updated{" "}
+                <time dateTime={order.updatedAt}>
+                  {formatDate(order.updatedAt)}
                 </time>
               </span>
-              <span aria-hidden="true" className="text-gray-300">
-                ·
-              </span>
-              <span>Project #{order.id}</span>
-            </p>
-          </header>
+            </footer>
+          </article>
 
-          <section aria-labelledby="project-description" className="p-6 sm:p-8">
-            <h2
-              id="project-description"
-              className="text-lg font-bold tracking-tight text-gray-900"
-            >
-              About the project
-            </h2>
-            {/* Preserve the client's paragraphs and line breaks. */}
-            <p className="mt-5 text-[15px] leading-7 whitespace-pre-wrap text-gray-600 [overflow-wrap:anywhere]">
-              {order.description}
-            </p>
-          </section>
-
-          <footer className="flex items-center gap-2 border-t border-gray-100 bg-gray-50/60 px-6 py-4 text-xs text-gray-500 sm:px-8">
-            <BriefcaseIcon className="size-4 shrink-0 text-gray-400" />
-            <span>
-              Last updated{" "}
-              <time dateTime={order.updatedAt}>
-                {formatDate(order.updatedAt)}
-              </time>
-            </span>
-          </footer>
-        </article>
+          {canViewMyProposal && (
+            <MyProposal
+              key={`${currentUser?.id}-${order.id}`}
+              orderId={order.id}
+              orderStatus={order.status}
+            />
+          )}
+        </div>
 
         <aside aria-label="Project information" className="min-w-0 space-y-6">
           {/* Budget and project facts. */}
@@ -274,6 +303,22 @@ export default function OrderDetails() {
           </section>
         </aside>
       </div>
+
+      <Modal
+        open={isDeleteOpen}
+        title="Delete this project?"
+        description={`“${order.title}” and all its proposals, messages and reviews will be permanently deleted. This cannot be undone.`}
+        isBusy={deleteOrder.isPending}
+        onClose={() => setIsDeleteOpen(false)}
+      >
+        {deleteOrder.isError && <p role="alert" className="alert-error mt-5">{getErrorMessage(deleteOrder.error)}</p>}
+        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <button type="button" autoFocus disabled={deleteOrder.isPending} onClick={() => setIsDeleteOpen(false)} className="btn btn-secondary">Cancel</button>
+          <button type="button" disabled={deleteOrder.isPending || !canEdit} onClick={() => { void handleDelete(); }} className="btn btn-danger">
+            {deleteOrder.isPending ? "Deleting…" : "Delete project"}
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }

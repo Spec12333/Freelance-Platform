@@ -126,6 +126,7 @@ Nested users are trimmed per context and never carry an email:
 | POST | `/orders` | CLIENT | `title` (5-120), `description` (20-5000), `budget`, `categoryId`, optional `deadline` (future) → 201 `order` |
 | GET | `/orders/:id` | public | 404 if missing |
 | PATCH | `/orders/:id` | CLIENT, author, `OPEN` only | Any subset of the create fields; `deadline: null` removes it. 403 not the author, 409 not `OPEN` |
+| DELETE | `/orders/:id` | CLIENT, author, `OPEN` only | 204. Permanently removes the order, proposals, messages and reviews in one transaction. 403 not the author, 409 not `OPEN` |
 | PATCH | `/orders/:id/status` | depends on the move | `{ "status": "REVIEW" }` → `order` |
 
 Filters for `GET /orders`, all optional: `categoryId`, `status`, `minBudget`,
@@ -156,8 +157,10 @@ pending proposals. `COMPLETED` and `CANCELLED` are final.
 | Method | Path | Access | Notes |
 |---|---|---|---|
 | GET | `/orders/:id/proposals` | the order's CLIENT | Plain array, oldest first. 403 for anyone else |
-| POST | `/orders/:id/proposals` | FREELANCER | `price`, `coverLetter` (20-3000) → 201 `proposal`. 409 order not `OPEN`, 409 already sent |
+| POST | `/orders/:id/proposals` | FREELANCER | `price`, `coverLetter` (5-3000) → 201 `proposal`. 409 order not `OPEN`, 409 already sent |
 | GET | `/proposals/my` | FREELANCER | My proposals, newest first, each with `order: { id, title, status, budget, deadline }`. Filters `status`, `orderId` |
+| PATCH | `/proposals/:id` | FREELANCER, author | `price` and/or `coverLetter` (5-3000) → `proposal`. At least one field. 409 unless proposal is `PENDING` and order is `OPEN` |
+| DELETE | `/proposals/:id` | FREELANCER, author | 204. Permanently removes a `PENDING` proposal on an `OPEN` order. 403 not the author, 409 wrong status |
 | POST | `/proposals/:id/accept` | the order's CLIENT | → `{ order, proposal }`. 409 order not `OPEN` or proposal already processed |
 
 **Viewed flag.** `GET /orders/:id/proposals` marks every proposal of the order as
@@ -166,6 +169,18 @@ call — highlight the `false` ones as new. The dashboard counter drops at the
 same moment.
 
 **"Have I applied?"** `GET /proposals/my?orderId=5` returns `total: 0` or `1`.
+
+**Deleting.** A freelancer can remove their pending proposal while the order is
+open and apply again later. At most one proposal per freelancer/order exists at
+a time. A client can remove their own open order and all its dependent records.
+Deletion is permanent and returns 204 with no body. Both operations lock the
+order first to serialize with acceptance; accepted proposals and started orders
+cannot be deleted through these endpoints.
+
+**Editing.** Only the author can edit a pending proposal on an open order. The
+price stays an integer from 1 to 1,000,000. Editing sets `viewedByClient: false`
+so the client sees the changed offer as unseen. Editing uses the same order-first
+row locks as acceptance; an accepted proposal cannot be changed by a racing edit.
 
 **Accept** is one transaction: the chosen proposal becomes `ACCEPTED`, the other
 pending ones `REJECTED`, the order `IN_PROGRESS` with `freelancerId` set.

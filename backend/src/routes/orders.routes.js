@@ -23,6 +23,7 @@ router.get('/', validate(listOrdersQuery, 'query'), ordersController.list);
 router.post('/', auth, requireRole(ROLES.CLIENT), validate(createOrderSchema), ordersController.create);
 router.get('/:id', withId, ordersController.getById);
 router.patch('/:id', auth, requireRole(ROLES.CLIENT), withId, validate(updateOrderSchema), ordersController.update);
+router.delete('/:id', auth, requireRole(ROLES.CLIENT), withId, ordersController.remove);
 // No role check here: who may make a transition depends on the transition, so
 // the service decides.
 router.patch('/:id/status', auth, withId, validate(changeStatusSchema), ordersController.changeStatus);

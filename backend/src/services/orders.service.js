@@ -1,5 +1,5 @@
 const { Op, literal } = require('sequelize');
-const { sequelize, Order, Proposal, Category, User } = require('../models');
+const { sequelize, Order, Proposal, Message, Review, Category, User } = require('../models');
 const { ORDER_STATUS, PROPOSAL_STATUS } = require('../config/constants');
 const { ApiError } = require('../utils/ApiError');
 const { getPagination, buildPage } = require('../utils/pagination');
@@ -102,6 +102,26 @@ const update = async (user, orderId, data) => {
   return getById(order.id);
 };
 
+// DELETE /orders/:id - remove an open order and its dependent records together.
+const remove = async (user, orderId) => {
+  await sequelize.transaction(async (transaction) => {
+    // Acceptance and proposal changes also lock the order first.
+    const order = await Order.findByPk(orderId, { transaction, lock: transaction.LOCK.UPDATE });
+    if (!order) throw ApiError.notFound('Order not found');
+    if (order.clientId !== user.id) throw ApiError.forbidden('Only the author can delete this order');
+    if (order.status !== OPEN) {
+      throw ApiError.conflict(`Order can only be deleted while it is OPEN (current status: ${order.status})`);
+    }
+
+    // Explicit cleanup does not depend on database cascade settings.
+    const options = { where: { orderId }, transaction };
+    await Message.destroy(options);
+    await Review.destroy(options);
+    await Proposal.destroy(options);
+    await order.destroy({ transaction });
+  });
+};
+
 // Which side of the order the user is on, or null for an outsider.
 const participantRole = (order, userId) => {
   if (order.clientId === userId) return 'client';
@@ -156,5 +176,6 @@ module.exports = {
   list,
   create,
   update,
+  remove,
   changeStatus,
 };

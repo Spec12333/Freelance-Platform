@@ -243,6 +243,27 @@ paths:
               schema: { $ref: '#/components/schemas/Error' }
               example: { message: 'Order can only be edited while it is OPEN (current status: IN_PROGRESS)' }
 
+    delete:
+      tags: [Orders]
+      summary: Delete my open order
+      description: |
+        Role `CLIENT`, order author only. The order must still be `OPEN`.
+        Permanently deletes the order and its proposals, messages and reviews in
+        one transaction. Users and categories are retained. Locks the order before
+        cleanup so deletion is serialized with proposal creation and acceptance.
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Deleted, no body }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: The order is no longer OPEN
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
   /orders/{id}/status:
     parameters:
       - $ref: '#/components/parameters/Id'
@@ -330,7 +351,7 @@ paths:
       tags: [Proposals]
       summary: Send a proposal
       description: |
-        Role `FREELANCER`. One proposal per freelancer per order.
+        Role `FREELANCER`. One active proposal per freelancer per order.
 
         - **409** — the order is not `OPEN`
         - **409** — you have already sent a proposal for this order
@@ -382,6 +403,61 @@ paths:
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
+
+  /proposals/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    patch:
+      tags: [Proposals]
+      summary: Edit my pending proposal
+      description: |
+        Role `FREELANCER`, proposal author only. Accepts price and/or cover letter.
+        The proposal must be `PENDING` and its order must still be `OPEN`.
+        Editing marks the proposal as unseen by the client again. Editing and
+        acceptance lock the order and proposal in the same order, so accepted
+        terms cannot be changed by a concurrent edit.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateProposalBody' }
+      responses:
+        '200':
+          description: Updated proposal
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Proposal' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Order is not OPEN or proposal is not PENDING
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+    delete:
+      tags: [Proposals]
+      summary: Delete my pending proposal
+      description: |
+        Role `FREELANCER`, proposal author only. The proposal must be `PENDING`
+        and its order must be `OPEN`. Permanently deletes the proposal. The
+        freelancer can apply again afterwards while the order remains open.
+        Locks the order first, then the proposal, just like editing and acceptance.
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Deleted, no body }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Order is not OPEN or proposal is not PENDING
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
 
   /proposals/{id}/accept:
     parameters:
@@ -1232,9 +1308,15 @@ components:
         price: { type: integer, minimum: 1, maximum: 1000000, example: 140 }
         coverLetter:
           type: string
-          minLength: 20
+          minLength: 5
           maxLength: 3000
           example: I write product copy for e-commerce, samples are in my portfolio.
+    UpdateProposalBody:
+      type: object
+      minProperties: 1
+      properties:
+        price: { type: integer, minimum: 1, maximum: 1000000 }
+        coverLetter: { type: string, minLength: 5, maxLength: 3000 }
     CreateMessageBody:
       type: object
       required: [body]

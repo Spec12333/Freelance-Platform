@@ -267,7 +267,7 @@ Two checks run:
 
 - `idParam` makes sure `:id` is a positive integer. `/orders/abc/proposals` → **400**.
 - `createProposalSchema` (in `validators/proposals.js`) checks the body: `price`
-  an integer from 1 to 1,000,000, `coverLetter` 20-3000 characters after
+  an integer from 1 to 1,000,000, `coverLetter` 5-3000 characters after
   trimming spaces.
 
 If anything is wrong, every problem is reported at once:
@@ -277,7 +277,7 @@ If anything is wrong, every problem is reported at once:
   "message": "Validation failed",
   "details": [
     { "field": "price", "message": "\"price\" must be greater than or equal to 1" },
-    { "field": "coverLetter", "message": "\"coverLetter\" length must be at least 20 characters long" }
+    { "field": "coverLetter", "message": "\"coverLetter\" length must be at least 5 characters long" }
   ]
 }
 ```
@@ -686,6 +686,20 @@ locked a proposal first and another locked the order first, each could end up
 waiting for the other forever (a **deadlock**). Locking in the same order every
 time makes that impossible. This was tested by firing four accepts at once: one
 succeeds, three get 409.
+
+The freelancer can also edit their pending proposal through
+`PATCH /proposals/:id` while its order is `OPEN`. That service locks the order
+first and the proposal second, just like acceptance. If an accept commits first,
+the edit sees the new statuses and returns 409 instead of changing agreed terms.
+An edit also resets `viewedByClient` so the client notices the updated offer.
+
+Deletion uses the same order-first locks. `DELETE /proposals/:id` lets the author
+withdraw a pending proposal on an open order. `DELETE /orders/:id` lets the client
+remove their own open order, explicitly deleting its messages, reviews and
+proposals in the same transaction. Both return 204. Proposal creation also locks
+the order, so it cannot insert a proposal halfway through deleting that order.
+If deletion wins a race with acceptance, acceptance returns 404 rather than
+trying to use a deleted row. If acceptance wins, deletion is refused with 409.
 
 ### 5.12 Let the database enforce uniqueness
 

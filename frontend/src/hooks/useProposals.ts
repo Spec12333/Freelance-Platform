@@ -1,18 +1,26 @@
-// useGetProposals(id), useCreateProposal, useAcceptProposal, useGetMyProposals(filters).
+// useGetProposals(id), useCreateProposal, useUpdateProposal, useDeleteProposal, useAcceptProposal, useGetMyProposals(filters).
 
 import {
   acceptProposal,
   createProposal,
+  deleteProposal,
   getMyProposals,
   getProposals,
+  updateProposal,
 } from "@/api/proposals.api";
 import { useAuthStore } from "@/store/auth";
-import type { CreateProposalBody, MyProposalsFilters } from "@/types/api";
+import type { CreateProposalBody, MyProposalsFilters, UpdateProposalBody } from "@/types/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { isAxiosError } from "axios";
 
 type CreateProposalParams = {
   id: number;
   body: CreateProposalBody;
+};
+
+type UpdateProposalParams = {
+  id: number;
+  body: UpdateProposalBody;
 };
 
 // Fetch an order's proposals and mark them as viewed.
@@ -37,6 +45,54 @@ export const useCreateProposal = () => {
         client.invalidateQueries({ queryKey: ["orders"] }),
         client.invalidateQueries({ queryKey: ["dashboard"] }),
       ]);
+    },
+  });
+};
+
+// Edit a proposal and refresh the offer, client list and counters.
+export const useUpdateProposal = () => {
+  const client = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: UpdateProposalParams) => updateProposal(data.id, data.body),
+
+    // Reload statuses if the client processed the proposal during editing.
+    onError: async (error) => {
+      if (!isAxiosError(error) || error.response?.status !== 409) return;
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ["proposals"] }),
+        client.invalidateQueries({ queryKey: ["orders"] }),
+        client.invalidateQueries({ queryKey: ["dashboard"] }),
+      ]);
+    },
+
+    onSuccess: async () => {
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ["proposals"] }),
+        client.invalidateQueries({ queryKey: ["orders"] }),
+        client.invalidateQueries({ queryKey: ["dashboard"] }),
+      ]);
+    },
+  });
+};
+
+// Withdraw an offer and refresh the form, proposal counts and dashboards.
+export const useDeleteProposal = () => {
+  const client = useQueryClient();
+
+  const refreshProposals = async () => {
+    await Promise.all([
+      client.invalidateQueries({ queryKey: ["proposals"] }),
+      client.invalidateQueries({ queryKey: ["orders"] }),
+      client.invalidateQueries({ queryKey: ["dashboard"] }),
+    ]);
+  };
+
+  return useMutation({
+    mutationFn: deleteProposal,
+    onSuccess: refreshProposals,
+    onError: async (error) => {
+      if (isAxiosError(error) && [404, 409].includes(error.response?.status ?? 0)) await refreshProposals();
     },
   });
 };

@@ -94,6 +94,23 @@ Money is always bold: `$300` in `font-bold text-gray-900`.
 - Order editing uses labelled fields grouped into project details, then budget
   and deadline. A compact sidebar shows the published project. Put Cancel and
   Save changes in the form footer; show field errors next to their controls.
+- Order creation follows the same form layout, with empty fields, a brief-writing
+  tips sidebar and a single Post project action. Keep loading, retry and empty
+  category states inside the page container.
+- Proposal forms sit below the project brief. Use a dollar-prefixed price field,
+  a cover-letter textarea and one Send proposal action. Keep the submitted form
+  as a success card and show API validation messages next to the fields.
+- Check the freelancer's existing proposal before showing the form. An existing
+  proposal uses a read-only card with its price, status, sent date and letter,
+  including when the order is no longer open. Show a spinner or retry card while
+  the check is pending or has failed.
+- A pending proposal on an open order has an Edit proposal action. Reuse the
+  proposal form with prefilled values and Cancel / Save changes actions. Lock
+  fields while saving and show the updated offer in its original card afterwards.
+- Delete actions are red and visible only to the owner in an allowed status.
+  Confirm permanent deletion in a native modal dialog with Cancel and Delete.
+  Keep keyboard focus inside, restore it on close, and block dismissal while the
+  request is pending. Keep errors inside the dialog so the user can retry.
 
 ## Status badges
 
@@ -135,9 +152,13 @@ Money is always bold: `$300` in `font-bold text-gray-900`.
 | `components/ui/ErrorMessage.tsx` | White error card, red alert icon and server message, optional green retry button |
 | `components/ui/EmptyState.tsx` | Empty list card with `title`, optional `description`, and `action: { label, onClick }` |
 | `components/ui/Pagination.tsx` | White navigation panel, green current page, numbered desktop buttons and compact mobile page count; hidden for a single page |
+| `components/ui/Modal.tsx` | Native dialog with labelled content, keyboard focus handling, backdrop/Escape dismissal and a busy state |
 | `components/StatusBadge.tsx` | Order or proposal status pill; labels and colours come from `utils/constants.ts` |
 | `components/OrderCard.tsx` | Responsive order card with a linked title, category, status, budget, deadline, proposal count and client rating; receives `order` via props |
 | `components/OrderFilters.tsx` | Search form, status/category dropdowns, active filter chips and reset; receives values and callbacks from the page |
+| `components/ProposalForm.tsx` | Create or edit a proposal with shared validation, prefilled edit values, pending/error states and success confirmation |
+| `components/MyProposal.tsx` | Checks the current freelancer's proposal for an order; shows its details or the application form, with loading and retry states |
 | `pages/Orders.tsx` | Marketplace header, total count and latest orders in a two-column desktop grid; the header stays visible during loading, empty and error states |
 | `pages/OrderDetails.tsx` | Project brief with status and dates, budget and facts sidebar, client initials and rating; loading, retry and order-not-found states |
 | `pages/EditOrder.tsx` | Prefilled order form with category selection, local deadline input, field errors and a disabled save state while submitting |
+| `pages/CreateOrder.tsx` | Empty project form with category selection, budget and local deadline validation, API field errors and a link to the created order after publishing |

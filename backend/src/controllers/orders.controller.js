@@ -21,4 +21,9 @@ const changeStatus = asyncHandler(async (req, res) => {
   res.json(await ordersService.changeStatus(req.user, req.valid.params.id, req.valid.body.status));
 });
 
-module.exports = { list, getById, create, update, changeStatus };
+const remove = asyncHandler(async (req, res) => {
+  await ordersService.remove(req.user, req.valid.params.id);
+  res.status(204).end();
+});
+
+module.exports = { list, getById, create, update, remove, changeStatus };

@@ -1,4 +1,4 @@
-// getOrders(filters), getOrder(id), createOrder(body), updateOrder(id, body), changeStatus(id, status).
+// getOrders(filters), getOrder(id), createOrder(body), updateOrder(id, body), deleteOrder(id), changeStatus(id, status).
 
 import type {
   CreateOrderBody,
@@ -35,4 +35,8 @@ export const updateOrder = async (id: Order["id"], body: UpdateOrderBody) => {
 export const changeStatus = async (id: Order["id"], status: OrderStatus) => {
   const result = await api.patch<Order>(`/orders/${id}/status`, { status });
   return result.data;
+};
+
+export const deleteOrder = async (id: Order["id"]): Promise<void> => {
+  await api.delete(`/orders/${id}`);
 };

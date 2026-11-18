@@ -10,7 +10,7 @@ const proposalInclude = [
   { model: User, as: 'freelancer', attributes: userBadgeAttributes('freelancer') },
 ];
 
-const getById = (id) => Proposal.findByPk(id, { include: proposalInclude });
+const getById = (id, options = {}) => Proposal.findByPk(id, { include: proposalInclude, ...options });
 
 // GET /orders/:id/proposals - the order's client only.
 const listByOrder = async (user, orderId) => {
@@ -55,16 +55,19 @@ const listMine = async (user, query) => {
 
 // POST /orders/:id/proposals - the role check (FREELANCER) is done by the route.
 const create = async (user, orderId, { price, coverLetter }) => {
-  const order = await Order.findByPk(orderId);
-  if (!order) throw ApiError.notFound('Order not found');
-  if (order.clientId === user.id) throw ApiError.forbidden('You cannot send a proposal to your own order');
-  if (order.status !== ORDER_STATUS.OPEN) {
-    throw ApiError.conflict(`Proposals are accepted only while the order is OPEN (current status: ${order.status})`);
-  }
-
   try {
-    const proposal = await Proposal.create({ orderId, freelancerId: user.id, price, coverLetter });
-    return getById(proposal.id);
+    return await sequelize.transaction(async (transaction) => {
+      // Keep creation serialized with order deletion and acceptance.
+      const order = await Order.findByPk(orderId, { transaction, lock: transaction.LOCK.UPDATE });
+      if (!order) throw ApiError.notFound('Order not found');
+      if (order.clientId === user.id) throw ApiError.forbidden('You cannot send a proposal to your own order');
+      if (order.status !== ORDER_STATUS.OPEN) {
+        throw ApiError.conflict(`Proposals are accepted only while the order is OPEN (current status: ${order.status})`);
+      }
+
+      const proposal = await Proposal.create({ orderId, freelancerId: user.id, price, coverLetter }, { transaction });
+      return getById(proposal.id, { transaction });
+    });
   } catch (error) {
     // No "does one already exist?" query beforehand: two requests sent at the
     // same moment would both pass it. The composite unique index on
@@ -74,6 +77,57 @@ const create = async (user, orderId, { price, coverLetter }) => {
     }
     throw error;
   }
+};
+
+// PATCH /proposals/:id - only the author may edit a pending proposal.
+const update = async (user, proposalId, data) => {
+  const found = await Proposal.findByPk(proposalId, { attributes: ['id', 'orderId', 'freelancerId'] });
+  if (!found) throw ApiError.notFound('Proposal not found');
+  if (found.freelancerId !== user.id) {
+    throw ApiError.forbidden('Only the author can edit this proposal');
+  }
+
+  return sequelize.transaction(async (transaction) => {
+    // Match accept's lock order: order first, proposal second. An edit that
+    // waits behind an accept must see the new statuses before changing terms.
+    const order = await Order.findByPk(found.orderId, { transaction, lock: transaction.LOCK.UPDATE });
+    if (!order) throw ApiError.notFound('Order not found');
+    const proposal = await Proposal.findByPk(proposalId, { transaction, lock: transaction.LOCK.UPDATE });
+    if (!proposal) throw ApiError.notFound('Proposal not found');
+    if (proposal.freelancerId !== user.id) {
+      throw ApiError.forbidden('Only the author can edit this proposal');
+    }
+    if (order.status !== ORDER_STATUS.OPEN) {
+      throw ApiError.conflict(`Proposals can only be edited while the order is OPEN (current status: ${order.status})`);
+    }
+    if (proposal.status !== PROPOSAL_STATUS.PENDING) {
+      throw ApiError.conflict(`Only PENDING proposals can be edited (current status: ${proposal.status})`);
+    }
+
+    // The client should notice that the offer has changed.
+    await proposal.update({ ...data, viewedByClient: false }, { transaction });
+    return getById(proposalId, { transaction });
+  });
+};
+
+// DELETE /proposals/:id - withdraw an author's pending offer on an open order.
+const remove = async (user, proposalId) => {
+  const found = await Proposal.findByPk(proposalId, { attributes: ['id', 'orderId', 'freelancerId'] });
+  if (!found) throw ApiError.notFound('Proposal not found');
+  if (found.freelancerId !== user.id) throw ApiError.forbidden('Only the author can delete this proposal');
+
+  await sequelize.transaction(async (transaction) => {
+    // Use the same lock order as editing and accepting a proposal.
+    const order = await Order.findByPk(found.orderId, { transaction, lock: transaction.LOCK.UPDATE });
+    if (!order) throw ApiError.notFound('Order not found');
+    const proposal = await Proposal.findByPk(proposalId, { transaction, lock: transaction.LOCK.UPDATE });
+    if (!proposal) throw ApiError.notFound('Proposal not found');
+    if (proposal.freelancerId !== user.id) throw ApiError.forbidden('Only the author can delete this proposal');
+    if (order.status !== ORDER_STATUS.OPEN || proposal.status !== PROPOSAL_STATUS.PENDING) {
+      throw ApiError.conflict('Only a PENDING proposal on an OPEN order can be deleted');
+    }
+    await proposal.destroy({ transaction });
+  });
 };
 
 // POST /proposals/:id/accept - the client picks a freelancer.
@@ -97,6 +151,7 @@ const accept = async (user, proposalId) => {
     // freelancer. Locking the order before any proposal also gives every
     // accept the same lock order, which rules out deadlocks.
     const order = await Order.findByPk(found.orderId, { transaction, lock: transaction.LOCK.UPDATE });
+    if (!order) throw ApiError.notFound('Order not found');
     if (order.clientId !== user.id) {
       throw ApiError.forbidden('Only the author of the order can accept a proposal');
     }
@@ -106,6 +161,7 @@ const accept = async (user, proposalId) => {
 
     // Re-read under the lock: its status may have changed since the first read.
     const proposal = await Proposal.findByPk(proposalId, { transaction, lock: transaction.LOCK.UPDATE });
+    if (!proposal) throw ApiError.notFound('Proposal not found');
     if (proposal.status !== PROPOSAL_STATUS.PENDING) {
       throw ApiError.conflict(`This proposal has already been processed (status: ${proposal.status})`);
     }
@@ -135,4 +191,4 @@ const accept = async (user, proposalId) => {
   };
 };
 
-module.exports = { listByOrder, listMine, create, accept };
+module.exports = { listByOrder, listMine, create, update, remove, accept };
