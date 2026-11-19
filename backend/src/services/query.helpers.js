@@ -28,7 +28,7 @@ const reviewsCountAttribute = (alias) => [
 // nested user never carries an email.
 
 // order.client, order.freelancer
-const userSummaryAttributes = (alias) => ['id', 'name', ratingAttribute(alias)];
+const userSummaryAttributes = (alias) => ['id', 'name', 'avatarUrl', ratingAttribute(alias)];
 
 // proposal.freelancer
 const userBadgeAttributes = (alias) => [...userSummaryAttributes(alias), reviewsCountAttribute(alias)];

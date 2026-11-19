@@ -9,6 +9,7 @@ import OrderProposals from "@/components/OrderProposals";
 import OrderActions from "@/components/OrderActions";
 import OrderChat from "@/components/OrderChat";
 import OrderReviews from "@/components/OrderReviews";
+import Avatar from "@/components/Avatar";
 import EmptyState from "@/components/ui/EmptyState";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import Spinner from "@/components/ui/Spinner";
@@ -106,14 +107,6 @@ export default function OrderDetails() {
     );
   }
 
-  // Use initials because the order response does not include a client avatar.
-  const clientInitials = order.client.name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part.charAt(0))
-    .join("")
-    .toUpperCase();
 
   // Freelancers can view their proposal even after the project closes.
   const canViewMyProposal = currentUser?.role === "FREELANCER"
@@ -293,12 +286,7 @@ export default function OrderDetails() {
               About the client
             </h2>
             <div className="mt-5 flex items-start gap-3">
-              <span
-                aria-hidden="true"
-                className="grid size-11 shrink-0 place-items-center rounded-full bg-brand-100 text-sm font-bold text-brand-800"
-              >
-                {clientInitials}
-              </span>
+              <Avatar user={order.client} />
               <div className="min-w-0 pt-0.5">
                 <p className="text-sm font-bold text-gray-900 [overflow-wrap:anywhere]">
                   {order.client.name}

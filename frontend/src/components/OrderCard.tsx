@@ -2,7 +2,8 @@ import { Link } from "react-router-dom";
 import type { Order } from "@/types/models";
 import { formatDate, formatMoney, formatRating } from "@/utils/format";
 import StatusBadge from "./StatusBadge";
-import { ArrowUpRightIcon, CalendarIcon, StarIcon, UserIcon } from "./ui/icons";
+import { ArrowUpRightIcon, CalendarIcon, StarIcon } from "./ui/icons";
+import Avatar from "./Avatar";
 
 type OrderCardProps = {
   order: Order;
@@ -64,9 +65,7 @@ export default function OrderCard({ order }: OrderCardProps) {
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-4">
         <div className="flex min-w-0 items-center gap-2.5">
-          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-gray-100 text-gray-500" aria-hidden="true">
-            <UserIcon className="size-4" />
-          </span>
+          <Avatar user={order.client} className="size-9 text-xs" />
           <div className="min-w-0">
             <p className="break-words text-sm font-semibold text-gray-800">{order.client.name}</p>
             <p className="mt-0.5 flex items-center gap-1 text-xs text-gray-500">

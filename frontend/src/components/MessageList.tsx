@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Message } from "@/types/models";
 import { formatDate, formatDateTime, formatTime } from "@/utils/format";
 import { ChatIcon } from "./ui/icons";
+import Avatar from "./Avatar";
 
 type MessageListProps = {
   messages: Message[];
@@ -72,8 +73,9 @@ export default function MessageList({ messages, currentUserId, page }: MessageLi
               return (
                 <li key={message.id} className="space-y-5">
                   {showDate && <p className="text-center text-[11px] font-medium text-gray-400">{date}</p>}
-                  <div className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
-                    <div className={`min-w-0 max-w-[88%] rounded-2xl px-4 py-3 shadow-sm sm:max-w-[80%] ${isOwn ? "rounded-br-md bg-brand-600 text-white" : "rounded-bl-md border border-gray-100 bg-white text-gray-700"}`}>
+                  <div className={`flex items-end gap-2 ${isOwn ? "flex-row-reverse" : ""}`}>
+                    <Avatar user={message.sender} className="size-8 text-xs" />
+                    <div className={`min-w-0 max-w-[calc(100%-2.5rem)] rounded-2xl px-4 py-3 shadow-sm sm:max-w-[80%] ${isOwn ? "rounded-br-md bg-brand-600 text-white" : "rounded-bl-md border border-gray-100 bg-white text-gray-700"}`}>
                       <p className={`text-xs font-bold [overflow-wrap:anywhere] ${isOwn ? "text-white/80" : "text-gray-900"}`}>{isOwn ? "You" : message.sender.name}</p>
                       <p className="mt-2 text-sm leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]">{message.body}</p>
                       <time dateTime={message.createdAt} title={formatDateTime(message.createdAt)} className={`mt-2 block text-right text-[10px] ${isOwn ? "text-white/70" : "text-gray-400"}`}>{formatTime(message.createdAt)}</time>

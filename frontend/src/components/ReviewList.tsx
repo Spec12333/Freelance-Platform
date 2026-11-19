@@ -1,6 +1,7 @@
 import type { Review } from "@/types/models";
 import { formatDate, formatDateTime } from "@/utils/format";
 import StarRating from "./StarRating";
+import Avatar from "./Avatar";
 import { ShieldIcon } from "./ui/icons";
 
 type ReviewListProps = {
@@ -14,16 +15,12 @@ export default function ReviewList({ reviews, currentUserId, clientId }: ReviewL
   return (
     <ol aria-label="Project reviews" className="divide-y divide-gray-200 px-6 sm:px-8">
       {reviews.map((review) => {
-        const initials = review.author.name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
         return (
           <li key={review.id} className="py-7">
             <article>
               <header className="flex flex-wrap items-start justify-between gap-4">
                 <div className="flex min-w-0 items-center gap-3">
-                  <span aria-hidden="true" className="relative grid size-11 shrink-0 place-items-center overflow-hidden rounded-full bg-brand-50 text-sm font-bold text-brand-800">
-                    {initials}
-                    {review.author.avatarUrl && <img src={review.author.avatarUrl} alt="" loading="lazy" className="absolute inset-0 size-full object-cover" onError={(event) => { event.currentTarget.hidden = true; }} />}
-                  </span>
+                  <Avatar user={review.author} />
                   <div className="min-w-0"><p className="font-semibold text-ink [overflow-wrap:anywhere]">{review.author.name}</p><p className="mt-1 text-xs text-gray-500">{clientId === undefined ? "Project feedback" : review.authorId === clientId ? "Client feedback" : "Freelancer feedback"}</p></div>
                 </div>
                 <time dateTime={review.createdAt} title={formatDateTime(review.createdAt)} className="text-xs text-gray-400">{formatDate(review.createdAt)}</time>

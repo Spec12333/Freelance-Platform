@@ -27,6 +27,18 @@ side.
 `rating` is **not** a column — it is computed as `AVG(rating)` over reviews where
 `targetId = user.id`. Storing it would mean keeping it in sync on every review.
 
+## Avatar
+
+| Field | Type | Notes |
+|---|---|---|
+| userId | INTEGER | PK and FK → User, one current photo per account, cascade delete |
+| data | BLOB / PostgreSQL BYTEA | Re-encoded WebP bytes, up to 512×512 pixels |
+| version | STRING(64) | SHA-256 of the encoded image, used in its URL and ETag |
+
+Image bytes are queried separately and never included in profile/list JSON.
+Only freelancers can upload/remove their own photo. The table is created by the
+existing `sequelize.sync()` startup flow; no filesystem/cloud credentials are needed.
+
 ## Category
 
 | Field | Type | Notes |

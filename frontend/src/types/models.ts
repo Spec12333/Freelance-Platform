@@ -31,6 +31,7 @@ export type ProposalStatus = "PENDING" | "ACCEPTED" | "REJECTED";
 export type UserSummary = {
   id: number;
   name: string;
+  avatarUrl: string | null; // external URL or API-relative uploaded photo
   rating: number | null;
 };
 
@@ -43,7 +44,7 @@ export type UserBadge = UserSummary & {
 export type UserRef = {
   id: number;
   name: string;
-  avatarUrl: string | null;
+  avatarUrl: string | null; // external URL or /api/freelancers/:id/avatar?v=...
 };
 
 // Public profile, as returned by GET /freelancers/:id and nested elsewhere.

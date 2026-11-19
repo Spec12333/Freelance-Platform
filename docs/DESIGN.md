@@ -163,6 +163,45 @@ Money is always bold: `$300` in `font-bold text-gray-900`.
   for page one, then load review pages from the API with the page in the URL.
   Keep the profile visible if its review request fails and avoid showing another
   user's previous reviews during navigation. Portfolio links open in a new tab.
+- The talent directory uses a forest/lime introduction and a real result count,
+  followed by name search, exact skill and hourly-rate filters, then sorting.
+  Name search waits 400 ms; skill/rate drafts apply together with a button. URL
+  parameters preserve applied filters and page; invalid ranges stay editable and
+  do not reach the API. Cards remain visible while new results load. Use a
+  responsive one/two/three-column grid with real avatars/initials, ratings, short
+  biographies, skill chips, rates and profile links. Do not invent availability,
+  earned badges or direct-hire/chat actions. Show empty, error/retry and loading
+  states inside the page, with a reset and removable applied-filter chips.
+
+- Avatars use the shared `Avatar` component: photo or initials, a visible keyboard
+  focus ring and a profile link. Resolve uploaded image paths against the API
+  host. Inside an existing profile link, use the non-linked variant to avoid
+  nested anchors. Reviews, proposals, project owners and chat senders follow the
+  same behavior. Missing/broken images fall back to initials.
+- Profile photo editing uses a labelled file input, circular local preview,
+  Save photo / Cancel selection and Remove photo actions. Accept JPEG/PNG/WebP
+  up to 5 MiB and 16 megapixels; show inline errors and pending/success feedback.
+  Save photos independently from profile text and disable concurrent profile
+  writes. Revoke browser preview URLs after replacing/removing drafts.
+- Profile editing uses a forest introduction, a numbered form and a saved-profile
+  sidebar. Show account name and email as read-only; edit biography, comma-separated
+  skills, hourly rate and a portfolio link. Explain the 20-skill/30-character limits and
+  normalize skills to unique lowercase values. Empty optional fields clear saved
+  values. Disable fields while saving, retain drafts on failure, map API errors
+  to fields and show a confirmation on success. Discard resets to saved values.
+  Keep email out of the public preview and offer a link to the public profile.
+
+- Dashboards share a forest/lime welcome panel, compact real statistics and
+  role-specific content. Clients see all order-status counts, the latest five
+  projects and an unseen-proposal count; loading the dashboard must not mark
+  proposals viewed. Freelancers see assigned active projects, proposal-status
+  totals and received rating/review counts; accepted proposals are a historical
+  total, not an active-project count. Admins see account-role counts, blocked
+  accounts, all order statuses and categories, without invented revenue or
+  activity trends. Use existing project cards and real routes for actions. Keep
+  loaded content on temporary refresh errors, offer manual refresh and show
+  honest zero/empty states. Status bars use each actual count over the total;
+  an empty total must produce zero-width bars.
 
 ## Status badges
 
@@ -207,6 +246,10 @@ Money is always bold: `$300` in `font-bold text-gray-900`.
 | `components/ui/Modal.tsx` | Native dialog with labelled content, keyboard focus handling, backdrop/Escape dismissal and a busy state |
 | `components/StatusBadge.tsx` | Order or proposal status pill; labels and colours come from `utils/constants.ts` |
 | `components/OrderCard.tsx` | Responsive order card with a linked title, category, status, budget, deadline, proposal count and client rating; receives `order` via props |
+| `components/FreelancerCard.tsx` | Pure UI for a professional's identity, rating, biography, skills, hourly rate and profile links |
+| `components/Avatar.tsx` | Shared clickable avatar/initials with API-host image resolution and an optional non-linked variant |
+| `components/AvatarUpload.tsx` | File selection, local preview, photo upload/removal and feedback without resetting profile drafts |
+| `components/FreelancerFilters.tsx` | Name search, exact-skill/rate drafts, sorting, active chips and reset callbacks |
 | `components/OrderFilters.tsx` | Search form, status/category dropdowns, active filter chips and reset; receives values and callbacks from the page |
 | `components/ProposalForm.tsx` | Create or edit a proposal with shared validation, prefilled edit values, pending/error states and success confirmation |
 | `components/ProposalCard.tsx` | Stateless client-facing proposal card with freelancer details, price, letter, sent date, status and an unseen marker |
@@ -225,5 +268,9 @@ Money is always bold: `$300` in `font-bold text-gray-900`.
 | `pages/Orders.tsx` | Marketplace header, total count and latest orders in a two-column desktop grid; the header stays visible during loading, empty and error states |
 | `pages/OrderDetails.tsx` | Project brief with status and dates, budget and facts sidebar, client initials and rating; loading, retry and order-not-found states |
 | `pages/FreelancerProfile.tsx` | Role-aware public profile with biography, skills, rate, portfolio, received reviews and loading/retry/not-found states |
+| `pages/Freelancers.tsx` | Talent directory with debounced name search, URL filters, validation, sorting and pagination |
+| `pages/MyProfile.tsx` | Freelancer profile form with validation, changed-field PATCH, account details and a saved-profile sidebar |
+| `components/dashboard/` | Role-specific dashboard views, a statistic card and an order-status summary |
+| `pages/Dashboard.tsx` | Current-user dashboard loading, refresh/error states and role dispatch |
 | `pages/EditOrder.tsx` | Prefilled order form with category selection, local deadline input, field errors and a disabled save state while submitting |
 | `pages/CreateOrder.tsx` | Empty project form with category selection, budget and local deadline validation, API field errors and a link to the created order after publishing |

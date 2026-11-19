@@ -689,6 +689,83 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
 
+  /freelancers/me/avatar:
+    put:
+      tags: [Freelancers]
+      summary: Upload my profile photo
+      description: |
+        Role FREELANCER. Send raw image bytes (not multipart), max 5 MiB and
+        16 million input pixels. JPEG, PNG and WebP only; no animations.
+        The server decodes and re-encodes a square WebP up to 512x512, strips
+        metadata and stores one current image per account in PostgreSQL.
+        Returns CurrentUser with a server-relative avatarUrl, resolved against
+        the API host. Photo writes are atomic.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          image/jpeg:
+            schema: { type: string, format: binary }
+          image/png:
+            schema: { type: string, format: binary }
+          image/webp:
+            schema: { type: string, format: binary }
+      responses:
+        '200':
+          description: Updated account with the uploaded photo URL
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CurrentUser' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '413':
+          description: Image exceeds 5 MiB
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '415':
+          description: Unsupported media type or compressed request encoding
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+    delete:
+      tags: [Freelancers]
+      summary: Remove my profile photo
+      description: Role FREELANCER. Clears avatarUrl and deletes uploaded image bytes, if any.
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Updated account with avatarUrl null
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CurrentUser' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /freelancers/{id}/avatar:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Freelancers]
+      summary: A public uploaded profile photo
+      description: Returns the current WebP image, with ETag and mandatory cache revalidation.
+      parameters:
+        - in: query
+          name: v
+          description: Image version used as a cache key in avatarUrl
+          schema: { type: string, pattern: '^[a-fA-F0-9]{64}$' }
+      responses:
+        '200':
+          description: Uploaded avatar
+          content:
+            image/webp:
+              schema: { type: string, format: binary }
+        '304':
+          description: Image has not changed (If-None-Match matches ETag)
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
   /freelancers/{id}:
     parameters:
       - $ref: '#/components/parameters/Id'
@@ -1033,10 +1110,11 @@ components:
     UserSummary:
       description: A user nested in an order (`client`, `freelancer`).
       type: object
-      required: [id, name, rating]
+      required: [id, name, avatarUrl, rating]
       properties:
         id: { type: integer, example: 2 }
         name: { type: string, example: Karen Petrosyan }
+        avatarUrl: { type: string, nullable: true, description: 'External http(s) URL or a server-relative /api/freelancers/:id/avatar?v=... path' }
         rating: { type: number, nullable: true, example: 5 }
     UserBadge:
       description: A user nested in a proposal (`freelancer`).
@@ -1053,7 +1131,7 @@ components:
       properties:
         id: { type: integer, example: 4 }
         name: { type: string, example: Anna Hakobyan }
-        avatarUrl: { type: string, nullable: true, example: null }
+        avatarUrl: { type: string, nullable: true, example: null, description: 'External http(s) URL or a server-relative uploaded avatar path; resolve against the API host' }
     User:
       description: A public profile. No email — only its owner and the admin see that.
       type: object
@@ -1069,7 +1147,7 @@ components:
           example: [react, typescript, css]
         hourlyRate: { type: integer, nullable: true, example: 20 }
         portfolioUrl: { type: string, nullable: true, example: 'https://example.com/anna' }
-        avatarUrl: { type: string, nullable: true, example: null }
+        avatarUrl: { type: string, nullable: true, example: null, description: 'External http(s) URL or API-relative uploaded avatar path' }
         rating:
           type: number
           nullable: true

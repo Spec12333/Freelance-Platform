@@ -4,8 +4,10 @@ import { useFreelancer } from "@/hooks/useFreelancers";
 import { useAuthStore } from "@/store/auth";
 import { getErrorMessage } from "@/api/client";
 import { formatDate, formatMoney, formatRating } from "@/utils/format";
+import { getWebUrl } from "@/utils/links";
 import ProfileReviews from "@/components/ProfileReviews";
 import StarRating from "@/components/StarRating";
+import Avatar from "@/components/Avatar";
 import EmptyState from "@/components/ui/EmptyState";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import Spinner from "@/components/ui/Spinner";
@@ -16,17 +18,6 @@ const ROLE_LABELS: Record<Role, string> = {
   FREELANCER: "Independent professional",
   CLIENT: "Client",
   ADMIN: "Administrator",
-};
-
-// Only regular web URLs can become clickable portfolio/avatar links.
-const getWebUrl = (value: string | null) => {
-  if (!value) return null;
-  try {
-    const url = new URL(value);
-    return url.protocol === "https:" || url.protocol === "http:" ? url : null;
-  } catch {
-    return null;
-  }
 };
 
 // Load a public profile and keep review requests scoped to the resolved user.
@@ -53,8 +44,6 @@ export default function FreelancerProfile() {
 
   const isFreelancer = profile.role === "FREELANCER";
   const isOwnProfile = currentUser?.id === profile.id;
-  const initials = profile.name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
-  const avatar = getWebUrl(profile.avatarUrl);
   const portfolio = getWebUrl(profile.portfolioUrl);
   const canEdit = isOwnProfile && currentUser?.role === "FREELANCER" && !profile.isBlocked;
   const canPostProject = currentUser?.role === "CLIENT" && isFreelancer && !profile.isBlocked;
@@ -70,10 +59,7 @@ export default function FreelancerProfile() {
         </div>
         <div className="relative p-6 pt-0 sm:p-8 sm:pt-0">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-            <div className="relative -mt-12 grid size-24 shrink-0 place-items-center overflow-hidden rounded-full border-[6px] border-white bg-lime text-3xl font-semibold text-brand-950 sm:-mt-14 sm:size-28">
-              {initials}
-              {avatar && <img key={avatar.href} src={avatar.href} alt="" className="absolute inset-0 size-full object-cover" onError={(event) => { event.currentTarget.hidden = true; }} />}
-            </div>
+            <Avatar user={profile} className="-mt-12 size-24 border-[6px] border-white text-3xl sm:-mt-14 sm:size-28" />
             <div className="flex flex-wrap items-center gap-3 sm:pt-5">
               {isOwnProfile && <span className="rounded-full border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-800">Your public profile</span>}
               {profile.isBlocked && <span className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-semibold text-gray-600">Account unavailable</span>}

@@ -2,6 +2,7 @@
 
 import { Link, NavLink, useLocation } from "react-router-dom";
 import Logo from "@/components/ui/Logo";
+import Avatar from "@/components/Avatar";
 import { LogoutIcon, PlusIcon } from "@/components/ui/icons";
 import { useAuthStore } from "@/store/auth";
 import type { Role } from "@/types/models";
@@ -32,16 +33,6 @@ const ROLE_LABELS: Record<Role, string> = {
   FREELANCER: "Freelancer",
   ADMIN: "Admin",
 };
-
-// "Karen Petrosyan" -> "KP"
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0].toUpperCase())
-    .join("");
-}
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   `border-b-2 px-2.5 py-3 text-sm sm:px-3 font-semibold whitespace-nowrap transition outline-none focus-visible:ring-4 focus-visible:ring-brand-600/20 ${
@@ -118,12 +109,7 @@ export default function Navbar() {
           )}
 
           <Link to={publicProfilePath} aria-label="View your public profile" className="flex items-center gap-2.5 rounded-full outline-none focus-visible:ring-4 focus-visible:ring-brand-600/20">
-            <span
-              aria-hidden="true"
-              className="grid size-9 shrink-0 place-items-center rounded-full bg-brand-100 text-sm font-bold text-brand-800"
-            >
-              {getInitials(user.name)}
-            </span>
+            <Avatar user={user} linked={false} className="size-9 text-sm" />
             <div className="hidden leading-tight lg:block">
               <p className="max-w-40 truncate text-sm font-semibold text-gray-900">
                 {user.name}

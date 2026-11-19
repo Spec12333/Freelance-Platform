@@ -92,8 +92,8 @@ Nested users are trimmed per context and never carry an email:
 
 | Where | Shape |
 |---|---|
-| `order.client`, `order.freelancer` | `{ id, name, rating }` |
-| `proposal.freelancer` | `{ id, name, rating, reviewsCount }` |
+| `order.client`, `order.freelancer` | `{ id, name, avatarUrl, rating }` |
+| `proposal.freelancer` | `{ id, name, avatarUrl, rating, reviewsCount }` |
 | `message.sender`, `review.author` | `{ id, name, avatarUrl }` |
 
 `Proposal`: `{ id, orderId, freelancerId, price, coverLetter, status, viewedByClient, freelancer, createdAt, updatedAt }`
@@ -256,6 +256,18 @@ participant, and no review in `GET /orders/:id/reviews` has your `authorId`.
 | GET | `/freelancers` | public | Paginated, blocked excluded. Filters `search` (name), `skill`, `minRate`, `maxRate`, `sort` (`rating` default — best first, unrated last; `rate` — cheapest first) |
 | GET | `/freelancers/:id` | public | `User` + `reviews` (latest 5). Works for any user, clients included |
 | PATCH | `/freelancers/me` | FREELANCER | Any of `bio`, `skills`, `hourlyRate`, `portfolioUrl`, `avatarUrl` → `user` (with email). `null` or `""` clears a field; skills are lowercased |
+| PUT | `/freelancers/me/avatar` | FREELANCER | Raw JPEG/PNG/WebP bytes (not multipart), matching `Content-Type`, max 5 MiB and 16 million pixels, no animations → updated `CurrentUser` |
+| DELETE | `/freelancers/me/avatar` | FREELANCER | Remove the saved photo (uploaded or external) → updated `CurrentUser` with `avatarUrl: null` |
+| GET | `/freelancers/:id/avatar` | public | Uploaded image as `image/webp`, or 404. Optional `v` is a 64-character hex cache key. ETag supports 304 |
+
+Uploaded photos are re-encoded as square WebP images up to 512×512, with metadata
+removed, and stored in the `Avatars` table. `avatarUrl` is then a server-relative
+path such as `/api/freelancers/4/avatar?v=<sha256>`. Resolve it against the **API
+host**, not the frontend host. External http(s) avatar URLs remain supported.
+Photo requests can return 400 (invalid/corrupt/animated image or excessive pixel
+count), 413 (over 5 MiB), 415 (unsupported media type/encoding), 401 or 403.
+Replacing an uploaded photo stores one current image per owner; deleting it or
+replacing it with an external URL removes its stored bytes.
 
 The embedded latest reviews and paginated received reviews both sort by
 `createdAt DESC, id DESC`, so equal timestamps keep a stable page order.

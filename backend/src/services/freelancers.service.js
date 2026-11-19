@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { User } = require('../models');
+const { User, Avatar, sequelize } = require('../models');
 const { ROLES } = require('../config/constants');
 const { getPagination, buildPage } = require('../utils/pagination');
 const { publicUserAttributes, ratingAttribute } = require('./query.helpers');
@@ -51,7 +51,11 @@ const emptyToNull = (data) =>
   Object.fromEntries(Object.entries(data).map(([key, value]) => [key, value === '' ? null : value]));
 
 const updateMe = async (user, data) => {
-  await User.update(emptyToNull(data), { where: { id: user.id } });
+  await sequelize.transaction(async (transaction) => {
+    await User.update(emptyToNull(data), { where: { id: user.id }, transaction });
+    // Replacing a file avatar with an external URL also removes its old bytes.
+    if (Object.hasOwn(data, 'avatarUrl')) await Avatar.destroy({ where: { userId: user.id }, transaction });
+  });
   return usersService.getCurrentUser(user.id);
 };
 

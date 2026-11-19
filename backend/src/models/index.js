@@ -9,6 +9,7 @@ const OrderModel = require('./Order');
 const ProposalModel = require('./Proposal');
 const ReviewModel = require('./Review');
 const MessageModel = require('./Message');
+const AvatarModel = require('./Avatar');
 
 const sequelize = new Sequelize(env.databaseUrl, {
   dialect: 'postgres',
@@ -27,6 +28,7 @@ const Order = OrderModel(sequelize);
 const Proposal = ProposalModel(sequelize);
 const Review = ReviewModel(sequelize);
 const Message = MessageModel(sequelize);
+const Avatar = AvatarModel(sequelize);
 
 // --- Associations ---------------------------------------------------------
 // Four different belongsTo(User) relations exist, so every one of them needs an
@@ -62,4 +64,7 @@ Order.hasMany(Message, { as: 'messages', foreignKey: { name: 'orderId', allowNul
 Message.belongsTo(Order, { as: 'order', foreignKey: 'orderId' });
 Message.belongsTo(User, { as: 'sender', foreignKey: { name: 'senderId', allowNull: false } });
 
-module.exports = { sequelize, User, Category, Order, Proposal, Review, Message };
+User.hasOne(Avatar, { as: 'avatar', foreignKey: 'userId', onDelete: 'CASCADE' });
+Avatar.belongsTo(User, { as: 'user', foreignKey: 'userId', onDelete: 'CASCADE' });
+
+module.exports = { sequelize, User, Category, Order, Proposal, Review, Message, Avatar };

@@ -9,6 +9,9 @@ const { ApiError } = require('../utils/ApiError');
 // as an error handler when it declares four parameters.
 // eslint-disable-next-line no-unused-vars
 const errorHandler = (err, req, res, next) => {
+  if (err.type === 'entity.too.large') return res.status(413).json({ message: 'Request body is too large (avatar limit: 5 MB)' });
+  if (err.type === 'encoding.unsupported') return res.status(415).json({ message: 'Compressed request bodies are not supported' });
+  if (err.type === 'entity.parse.failed') return res.status(400).json({ message: 'Invalid JSON body' });
   // Expected errors thrown on purpose by services and middleware.
   if (err instanceof ApiError) {
     return res.status(err.status).json({

@@ -106,6 +106,9 @@ cd frontend && npm run dev    # Vite, port 5173
 
 ## Out of scope
 
-Payments, file uploads, migrations, automated tests, email. Do not add them
+Payments, chat/general file attachments, migrations, automated tests, email. Do not add them
 unasked — they belong in the README's
 "Future work" section.
+
+Profile avatar uploads are in scope: raw JPEG/PNG/WebP up to 5 MiB, decoded and
+re-encoded with sharp, stored separately in PostgreSQL, never in user JSON.

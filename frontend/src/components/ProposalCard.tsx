@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import type { Proposal } from "@/types/models";
 import { formatDateTime, formatMoney, formatRating } from "@/utils/format";
 import StatusBadge from "./StatusBadge";
+import Avatar from "./Avatar";
 import { ArrowUpRightIcon, CalendarIcon, StarIcon } from "./ui/icons";
 
 type ProposalCardProps = {
@@ -16,15 +17,6 @@ export default function ProposalCard({ proposal, onChoose, isChoosing = false, d
   const freelancer = proposal.freelancer;
   const isNew = !proposal.viewedByClient;
 
-  // Proposal responses include a short profile without an avatar URL.
-  const initials = freelancer.name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part.charAt(0))
-    .join("")
-    .toUpperCase();
-
   return (
     <article
       aria-labelledby={`proposal-freelancer-${proposal.id}`}
@@ -33,9 +25,7 @@ export default function ProposalCard({ proposal, onChoose, isChoosing = false, d
       {/* Freelancer details and proposal status. */}
       <header className="flex flex-col gap-4 border-b border-gray-100 p-5 sm:flex-row sm:items-start sm:justify-between sm:p-6">
         <div className="flex min-w-0 flex-1 items-start gap-3">
-          <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-full bg-brand-100 text-sm font-bold text-brand-800">
-            {initials}
-          </span>
+          <Avatar user={freelancer} />
           <div className="min-w-0">
             <h3 id={`proposal-freelancer-${proposal.id}`} className="text-base font-bold leading-snug text-gray-900">
               <Link

@@ -1,12 +1,10 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
-import Dashboard from "./pages/Dashboard";
 import Orders from "./pages/Orders";
 import OrderDetails from "./pages/OrderDetails";
-import MyProfile from "./pages/MyProfile";
-import Freelancers from "./pages/Freelancers";
 import FreelancerProfile from "./pages/FreelancerProfile";
 import EditOrder from "./pages/EditOrder";
 import CreateOrder from "./pages/CreateOrder";
@@ -17,6 +15,11 @@ import AdminCategories from "./pages/admin/AdminCategories";
 import { useAuthInit } from "./hooks/useAuthInit";
 import Spinner from "./components/ui/Spinner";
 import ErrorMessage from "./components/ui/ErrorMessage";
+
+// Load workspace pages only when their routes are opened.
+const Freelancers = lazy(() => import("./pages/Freelancers"));
+const MyProfile = lazy(() => import("./pages/MyProfile"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
 
 // All <Route> definitions: public (Login, Register) and ProtectedRoute-wrapped ones inside Layout.
 export default function App() {
@@ -53,10 +56,10 @@ export default function App() {
         {/* Signed-in users only */}
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/" element={<Suspense fallback={<div className="card p-10"><Spinner label="Opening your workspace…" /></div>}><Dashboard /></Suspense>} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/orders/:id" element={<OrderDetails />} />
-            <Route path="/freelancers" element={<Freelancers />} />
+            <Route path="/freelancers" element={<Suspense fallback={<div className="card p-10"><Spinner label="Opening the talent directory…" /></div>}><Freelancers /></Suspense>} />
             <Route path="/freelancers/:id" element={<FreelancerProfile />} />
 
             {/* Clients Only */}
@@ -67,7 +70,7 @@ export default function App() {
 
             {/* Freelancers only */}
             <Route element={<ProtectedRoute roles={["FREELANCER"]} />}>
-              <Route path="/profile" element={<MyProfile />} />
+              <Route path="/profile" element={<Suspense fallback={<div className="card p-10"><Spinner label="Opening your profile…" /></div>}><MyProfile /></Suspense>} />
             </Route>
 
             {/* Admin only */}

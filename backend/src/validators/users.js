@@ -33,4 +33,6 @@ const listFreelancersQuery = Joi.object({
   sort: Joi.string().valid('rating', 'rate').default('rating'),
 });
 
-module.exports = { updateProfileSchema, listFreelancersQuery };
+const avatarQuery = Joi.object({ v: Joi.string().hex().length(64) });
+
+module.exports = { updateProfileSchema, listFreelancersQuery, avatarQuery };
