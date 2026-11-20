@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
 import type { Proposal } from "@/types/models";
 import { formatDateTime, formatMoney, formatRating } from "@/utils/format";
-import StatusBadge from "./StatusBadge";
-import Avatar from "./Avatar";
-import { ArrowUpRightIcon, CalendarIcon, StarIcon } from "./ui/icons";
+import StatusBadge from "@/components/ui/StatusBadge";
+import Avatar from "@/components/ui/Avatar";
+import { ArrowUpRightIcon, CalendarIcon, StarIcon } from "@/components/ui/icons";
 
 type ProposalCardProps = {
   proposal: Proposal;

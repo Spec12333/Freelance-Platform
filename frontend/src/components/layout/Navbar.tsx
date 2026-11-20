@@ -2,11 +2,12 @@
 
 import { Link, NavLink, useLocation } from "react-router-dom";
 import Logo from "@/components/ui/Logo";
-import Avatar from "@/components/Avatar";
+import Avatar from "@/components/ui/Avatar";
 import { LogoutIcon, PlusIcon } from "@/components/ui/icons";
 import { useAuthStore } from "@/store/auth";
 import type { Role } from "@/types/models";
 import { queryClient } from "@/api/queryClient";
+import { useDashboard } from "@/hooks/useDashboard";
 type NavItem = { label: string; to: string };
 
 const NAV_ITEMS: Record<Role, NavItem[]> = {
@@ -45,6 +46,9 @@ export default function Navbar() {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const { pathname } = useLocation();
+  // Reuse Dashboard's cache; one visible-tab check every 30 seconds for clients.
+  const dashboard = useDashboard({ enabled: user?.role === "CLIENT", refetchInterval: 30_000 });
+  const unreadCount = user?.role === "CLIENT" && dashboard.data?.role === "CLIENT" ? dashboard.data.unseenProposals : 0;
 
   const handleLogout = () => {
     queryClient.clear();
@@ -82,13 +86,15 @@ export default function Navbar() {
                 key={item.to}
                 to={isMyProfile ? publicProfilePath : item.to}
                 end={item.to === "/" || (item.to === "/freelancers" && isOwnPublicProfile && user.role === "FREELANCER")}
-                className={({ isActive }) => linkClass({ isActive: isActive || (isMyProfile && pathname === "/profile") })}
+                className={({ isActive }) => `${linkClass({ isActive: isActive || (isMyProfile && pathname === "/profile") })} inline-flex items-center gap-2`}
               >
                 {item.label}
+                {item.to === "/orders" && unreadCount > 0 && <><span aria-hidden="true" className="grid h-5 min-w-5 place-items-center rounded-full bg-amber-100 px-1.5 text-[10px] font-bold text-amber-800">{unreadCount > 99 ? "99+" : unreadCount}</span><span className="sr-only">, {unreadCount} new {unreadCount === 1 ? "proposal" : "proposals"}</span></>}
               </NavLink>
             );
           })}
         </nav>
+        {user.role === "CLIENT" && dashboard.data?.role === "CLIENT" && <span role="status" aria-live="polite" aria-atomic="true" className="sr-only">{unreadCount === 0 ? "No unread proposals" : `${unreadCount} unread ${unreadCount === 1 ? "proposal" : "proposals"}`}</span>}
 
         <div className="ml-auto flex h-20 items-center gap-2 sm:gap-3">
           {user.role === "CLIENT" && (

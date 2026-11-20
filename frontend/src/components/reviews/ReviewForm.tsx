@@ -5,8 +5,8 @@ import { useAuthStore } from "@/store/auth";
 import { getErrorMessage } from "@/api/client";
 import type { ApiErrorBody, CreateReviewBody } from "@/types/api";
 import type { Order } from "@/types/models";
-import StarRating from "./StarRating";
-import { ArrowUpRightIcon, ShieldIcon } from "./ui/icons";
+import StarRating from "@/components/ui/StarRating";
+import { ArrowUpRightIcon, ShieldIcon } from "@/components/ui/icons";
 
 type ReviewFormProps = {
   order: Order;

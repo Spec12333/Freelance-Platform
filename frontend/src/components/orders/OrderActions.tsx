@@ -4,9 +4,9 @@ import { getErrorMessage } from "@/api/client";
 import { useUpdateOrderStatus } from "@/hooks/useOrders";
 import { useAuthStore } from "@/store/auth";
 import type { Order } from "@/types/models";
-import StatusBadge from "./StatusBadge";
-import Modal from "./ui/Modal";
-import { ArrowUpRightIcon, BriefcaseIcon } from "./ui/icons";
+import StatusBadge from "@/components/ui/StatusBadge";
+import Modal from "@/components/ui/Modal";
+import { ArrowUpRightIcon, BriefcaseIcon } from "@/components/ui/icons";
 
 type OrderActionsProps = {
   order: Order;

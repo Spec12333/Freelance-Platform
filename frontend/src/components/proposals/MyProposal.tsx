@@ -5,12 +5,12 @@ import { useDeleteProposal, useGetMyProposals } from "@/hooks/useProposals";
 import { useAuthStore } from "@/store/auth";
 import type { OrderStatus } from "@/types/models";
 import { formatDateTime, formatMoney } from "@/utils/format";
-import ProposalForm from "./ProposalForm";
-import StatusBadge from "./StatusBadge";
-import ErrorMessage from "./ui/ErrorMessage";
-import Spinner from "./ui/Spinner";
-import Modal from "./ui/Modal";
-import { MailIcon } from "./ui/icons";
+import ProposalForm from "@/components/proposals/ProposalForm";
+import StatusBadge from "@/components/ui/StatusBadge";
+import ErrorMessage from "@/components/ui/ErrorMessage";
+import Spinner from "@/components/ui/Spinner";
+import Modal from "@/components/ui/Modal";
+import { MailIcon } from "@/components/ui/icons";
 
 type MyProposalProps = {
   orderId: number;

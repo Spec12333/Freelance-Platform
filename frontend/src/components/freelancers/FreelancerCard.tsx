@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
 import type { User } from "@/types/models";
 import { formatMoney, formatRating } from "@/utils/format";
-import Avatar from "./Avatar";
-import StarRating from "./StarRating";
-import { ArrowUpRightIcon } from "./ui/icons";
+import Avatar from "@/components/ui/Avatar";
+import StarRating from "@/components/ui/StarRating";
+import { ArrowUpRightIcon } from "@/components/ui/icons";
 
 type FreelancerCardProps = {
   freelancer: User;

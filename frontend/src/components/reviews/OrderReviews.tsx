@@ -2,11 +2,11 @@ import { useOrderReviews } from "@/hooks/useReviews";
 import { useAuthStore } from "@/store/auth";
 import { getErrorMessage } from "@/api/client";
 import type { Order } from "@/types/models";
-import ReviewForm from "./ReviewForm";
-import ReviewList from "./ReviewList";
-import ErrorMessage from "./ui/ErrorMessage";
-import Spinner from "./ui/Spinner";
-import { ArrowUpRightIcon, RefreshIcon, ShieldIcon } from "./ui/icons";
+import ReviewForm from "@/components/reviews/ReviewForm";
+import ReviewList from "@/components/reviews/ReviewList";
+import ErrorMessage from "@/components/ui/ErrorMessage";
+import Spinner from "@/components/ui/Spinner";
+import { ArrowUpRightIcon, RefreshIcon, ShieldIcon } from "@/components/ui/icons";
 
 // Load public feedback and let each participant review a completed project once.
 export default function OrderReviews({ order }: { order: Order }) {

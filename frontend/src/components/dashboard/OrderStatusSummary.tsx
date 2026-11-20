@@ -1,4 +1,4 @@
-import StatusBadge from "@/components/StatusBadge";
+import StatusBadge from "@/components/ui/StatusBadge";
 import type { OrderStatus } from "@/types/models";
 import { ORDER_STATUS } from "@/utils/constants";
 

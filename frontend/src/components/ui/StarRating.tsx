@@ -1,5 +1,5 @@
 import { useId, useState } from "react";
-import { StarIcon } from "./ui/icons";
+import { StarIcon } from "@/components/ui/icons";
 
 type StarRatingProps = {
   value: number;

@@ -4,12 +4,12 @@ import { useAcceptProposal, useGetProposals } from "@/hooks/useProposals";
 import { useAuthStore } from "@/store/auth";
 import type { OrderStatus, Proposal } from "@/types/models";
 import { formatMoney } from "@/utils/format";
-import ProposalCard from "./ProposalCard";
-import EmptyState from "./ui/EmptyState";
-import ErrorMessage from "./ui/ErrorMessage";
-import Spinner from "./ui/Spinner";
-import Modal from "./ui/Modal";
-import { RefreshIcon } from "./ui/icons";
+import ProposalCard from "@/components/proposals/ProposalCard";
+import EmptyState from "@/components/ui/EmptyState";
+import ErrorMessage from "@/components/ui/ErrorMessage";
+import Spinner from "@/components/ui/Spinner";
+import Modal from "@/components/ui/Modal";
+import { RefreshIcon } from "@/components/ui/icons";
 
 type OrderProposalsProps = {
   orderId: number;

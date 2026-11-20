@@ -5,11 +5,11 @@ import { useFreelancersReviews } from "@/hooks/useFreelancers";
 import { useAuthStore } from "@/store/auth";
 import { getErrorMessage } from "@/api/client";
 import type { PublicProfile } from "@/types/models";
-import ReviewList from "./ReviewList";
-import Pagination from "./ui/Pagination";
-import ErrorMessage from "./ui/ErrorMessage";
-import Spinner from "./ui/Spinner";
-import { RefreshIcon, StarIcon } from "./ui/icons";
+import ReviewList from "@/components/reviews/ReviewList";
+import Pagination from "@/components/ui/Pagination";
+import ErrorMessage from "@/components/ui/ErrorMessage";
+import Spinner from "@/components/ui/Spinner";
+import { RefreshIcon, StarIcon } from "@/components/ui/icons";
 
 const REVIEWS_PER_PAGE = 5;
 

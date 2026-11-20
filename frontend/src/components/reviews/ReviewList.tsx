@@ -1,8 +1,8 @@
 import type { Review } from "@/types/models";
 import { formatDate, formatDateTime } from "@/utils/format";
-import StarRating from "./StarRating";
-import Avatar from "./Avatar";
-import { ShieldIcon } from "./ui/icons";
+import StarRating from "@/components/ui/StarRating";
+import Avatar from "@/components/ui/Avatar";
+import { ShieldIcon } from "@/components/ui/icons";
 
 type ReviewListProps = {
   reviews: Review[];

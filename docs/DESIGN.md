@@ -203,6 +203,22 @@ Money is always bold: `$300` in `font-bold text-gray-900`.
   honest zero/empty states. Status bars use each actual count over the total;
   an empty total must produce zero-width bars.
 
+- The client's Orders navigation link shows an amber unread-pending-proposal
+  badge, hidden at zero and capped visually at 99+. Its accessible label keeps
+  the actual count. Reuse the account-scoped dashboard query, poll every 30
+  seconds only in a visible tab and refresh after opening an order's proposals.
+- Administration uses the shared forest/lime header and real query totals.
+  User search waits 400 ms or submits immediately; role, access and page stay in
+  the URL. Responsive tables become labelled rows/cards on phones. Show avatar,
+  name, email, role, account access and join date. Confirm block/unblock in a
+  native dialog; the current administrator cannot change their own access.
+- Categories use a paginated alphabetical list with usage counts. Create and
+  rename share a labelled dialog form; deletion has a separate confirmation.
+  Disable deletion with a visible explanation while a category is in use. Keep
+  errors and drafts inside dialogs, lock dismissal during writes, refresh all
+  affected caches and correct empty last pages after deletion. Preserve rows
+  during updates but disable their actions until the current data arrives.
+
 ## Status badges
 
 `className="badge ..."` plus:
@@ -244,33 +260,38 @@ Money is always bold: `$300` in `font-bold text-gray-900`.
 | `components/ui/EmptyState.tsx` | Empty list card with `title`, optional `description`, and `action: { label, onClick }` |
 | `components/ui/Pagination.tsx` | White navigation panel, green current page, numbered desktop buttons and compact mobile page count; hidden for a single page |
 | `components/ui/Modal.tsx` | Native dialog with labelled content, keyboard focus handling, backdrop/Escape dismissal and a busy state |
-| `components/StatusBadge.tsx` | Order or proposal status pill; labels and colours come from `utils/constants.ts` |
-| `components/OrderCard.tsx` | Responsive order card with a linked title, category, status, budget, deadline, proposal count and client rating; receives `order` via props |
-| `components/FreelancerCard.tsx` | Pure UI for a professional's identity, rating, biography, skills, hourly rate and profile links |
-| `components/Avatar.tsx` | Shared clickable avatar/initials with API-host image resolution and an optional non-linked variant |
-| `components/AvatarUpload.tsx` | File selection, local preview, photo upload/removal and feedback without resetting profile drafts |
-| `components/FreelancerFilters.tsx` | Name search, exact-skill/rate drafts, sorting, active chips and reset callbacks |
-| `components/OrderFilters.tsx` | Search form, status/category dropdowns, active filter chips and reset; receives values and callbacks from the page |
-| `components/ProposalForm.tsx` | Create or edit a proposal with shared validation, prefilled edit values, pending/error states and success confirmation |
-| `components/ProposalCard.tsx` | Stateless client-facing proposal card with freelancer details, price, letter, sent date, status and an unseen marker |
-| `components/OrderProposals.tsx` | Owner-only proposal list with totals, unseen highlights, refresh and loading/error/empty states |
-| `components/OrderActions.tsx` | Participant-only progress card with assigned freelancer, permitted status actions, confirmation and mutation feedback |
-| `components/OrderChat.tsx` | Private order conversation with live connection status, page navigation, access/loading/error states and REST message sending |
-| `components/MessageList.tsx` | Message bubbles, date separators, local times and scrolling that preserves the reading position |
-| `components/MessageInput.tsx` | Validated message draft with character count, pending/error states and reset after successful sending |
-| `components/StarRating.tsx` | Pure UI for fractional display ratings and keyboard-accessible native radio selection |
-| `components/ReviewList.tsx` | Supplied reviews with author, date, rating, comment and own-review marker |
-| `components/ReviewForm.tsx` | Validated rating/comment form with pending/error states and one-review submission |
-| `components/OrderReviews.tsx` | Completed-project feedback with participant eligibility, fresh duplicate check, public list and published state |
-| `components/ProfileReviews.tsx` | Received-review pagination seeded from the profile, with URL pages and local loading/error/empty states |
+| `components/ui/StatusBadge.tsx` | Order or proposal status pill; labels and colours come from `utils/constants.ts` |
+| `components/orders/OrderCard.tsx` | Responsive order card with a linked title, category, status, budget, deadline, proposal count and client rating; receives `order` via props |
+| `components/freelancers/FreelancerCard.tsx` | Pure UI for a professional's identity, rating, biography, skills, hourly rate and profile links |
+| `components/ui/Avatar.tsx` | Shared clickable avatar/initials with API-host image resolution and an optional non-linked variant |
+| `components/profile/AvatarUpload.tsx` | File selection, local preview, photo upload/removal and feedback without resetting profile drafts |
+| `components/freelancers/FreelancerFilters.tsx` | Name search, exact-skill/rate drafts, sorting, active chips and reset callbacks |
+| `components/orders/OrderFilters.tsx` | Search form, status/category dropdowns, active filter chips and reset; receives values and callbacks from the page |
+| `components/proposals/ProposalForm.tsx` | Create or edit a proposal with shared validation, prefilled edit values, pending/error states and success confirmation |
+| `components/proposals/ProposalCard.tsx` | Stateless client-facing proposal card with freelancer details, price, letter, sent date, status and an unseen marker |
+| `components/proposals/OrderProposals.tsx` | Owner-only proposal list with totals, unseen highlights, refresh and loading/error/empty states |
+| `components/orders/OrderActions.tsx` | Participant-only progress card with assigned freelancer, permitted status actions, confirmation and mutation feedback |
+| `components/chat/OrderChat.tsx` | Private order conversation with live connection status, page navigation, access/loading/error states and REST message sending |
+| `components/chat/MessageList.tsx` | Message bubbles, date separators, local times and scrolling that preserves the reading position |
+| `components/chat/MessageInput.tsx` | Validated message draft with character count, pending/error states and reset after successful sending |
+| `components/ui/StarRating.tsx` | Pure UI for fractional display ratings and keyboard-accessible native radio selection |
+| `components/reviews/ReviewList.tsx` | Supplied reviews with author, date, rating, comment and own-review marker |
+| `components/reviews/ReviewForm.tsx` | Validated rating/comment form with pending/error states and one-review submission |
+| `components/reviews/OrderReviews.tsx` | Completed-project feedback with participant eligibility, fresh duplicate check, public list and published state |
+| `components/reviews/ProfileReviews.tsx` | Received-review pagination seeded from the profile, with URL pages and local loading/error/empty states |
 | `components/WorkspacePlaceholder.tsx` | Shared branded, honest placeholder for sections whose functionality is pending |
-| `components/MyProposal.tsx` | Checks the current freelancer's proposal for an order; shows its details or the application form, with loading and retry states |
+| `components/proposals/MyProposal.tsx` | Checks the current freelancer's proposal for an order; shows its details or the application form, with loading and retry states |
 | `pages/Orders.tsx` | Marketplace header, total count and latest orders in a two-column desktop grid; the header stays visible during loading, empty and error states |
 | `pages/OrderDetails.tsx` | Project brief with status and dates, budget and facts sidebar, client initials and rating; loading, retry and order-not-found states |
 | `pages/FreelancerProfile.tsx` | Role-aware public profile with biography, skills, rate, portfolio, received reviews and loading/retry/not-found states |
 | `pages/Freelancers.tsx` | Talent directory with debounced name search, URL filters, validation, sorting and pagination |
 | `pages/MyProfile.tsx` | Freelancer profile form with validation, changed-field PATCH, account details and a saved-profile sidebar |
-| `components/dashboard/` | Role-specific dashboard views, a statistic card and an order-status summary |
+| `pages/admin/AdminUsers.tsx` | Private user search/filter/pagination and confirmed access changes with self-protection |
+| `pages/admin/AdminCategories.tsx` | Paginated categories, create/rename/delete dialogs and usage-based deletion restrictions |
+| `components/admin/CategoryForm.tsx` | Shared category validation, create/rename mutations and inline server errors |
+| `components/admin/AdminHeader.tsx` | Shared branded admin introduction with an actual API total and optional action |
+| `components/ui/DashboardStat.tsx` | Shared statistic card with a label, value, icon and hint |
+| `components/dashboard/` | Role-specific dashboard views and an order-status summary |
 | `pages/Dashboard.tsx` | Current-user dashboard loading, refresh/error states and role dispatch |
 | `pages/EditOrder.tsx` | Prefilled order form with category selection, local deadline input, field errors and a disabled save state while submitting |
 | `pages/CreateOrder.tsx` | Empty project form with category selection, budget and local deadline validation, API field errors and a link to the created order after publishing |

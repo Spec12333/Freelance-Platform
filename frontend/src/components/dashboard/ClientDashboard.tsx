@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
-import OrderCard from "@/components/OrderCard";
+import OrderCard from "@/components/orders/OrderCard";
 import EmptyState from "@/components/ui/EmptyState";
 import { ArrowUpRightIcon, BriefcaseIcon, ChatIcon, LayersIcon, StarIcon } from "@/components/ui/icons";
 import type { ClientDashboard as ClientDashboardData } from "@/types/api";
-import DashboardStat from "./DashboardStat";
+import DashboardStat from "@/components/ui/DashboardStat";
 import OrderStatusSummary from "./OrderStatusSummary";
 
 // Client statistics and the five latest projects supplied by the dashboard API.

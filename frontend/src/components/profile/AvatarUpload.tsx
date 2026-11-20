@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { getErrorMessage } from "@/api/client";
 import { useUpdateMyAvatar } from "@/hooks/useFreelancers";
 import type { CurrentUser } from "@/types/models";
-import Avatar from "./Avatar";
+import Avatar from "@/components/ui/Avatar";
 
 type AvatarUploadProps = { user: CurrentUser; disabled: boolean };
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];

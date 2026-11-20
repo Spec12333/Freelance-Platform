@@ -5,20 +5,39 @@ send proposals, the client picks one, and both sides review each other after the
 work is done. The project is a portfolio piece for a **frontend interview**, so
 the frontend is what gets evaluated.
 
-## Status (2026-10-23)
+## Status (2026-11-20)
 
-**Backend: complete.** Every endpoint in `docs/API.md` is implemented, documented
-in Swagger (`http://localhost:4000/api/docs`) and checked end to end, including
-the negative cases: second proposal, someone else's order, skipped status,
-review on an unfinished order, someone else's chat, blocked user with a live
-token, two concurrent accepts on one order. `npm run seed -- --fresh` gives demo
-data for every screen.
+**Backend and frontend MVP screens: implemented.** Auth, orders and forms,
+proposals, selection/status actions, WebSocket chat, reviews, the freelancer
+directory, public/editable profiles, avatar uploads, role-specific dashboards
+and both admin pages are connected. The client navbar shares the dashboard
+cache and checks unread pending proposals every 30 seconds in a visible tab.
+Opening a project's proposal list refreshes that counter immediately.
 
-**Frontend: started.** Types in `frontend/src/types/` match the contract; the
-rest of `frontend/src` is placeholders.
+**Real integration check passed on 2026-11-20.** A production frontend build and
+the actual backend/Socket.IO server were exercised in separate Chrome sessions
+against real PostgreSQL models in an isolated temporary schema:
 
-The original plan alternated backend and frontend day by day. With the backend
-done, the whole remaining budget goes to the frontend.
+- Registration, all-role login/session reload, order create/edit and proposal
+  create/edit; duplicate offers are rejected.
+- Navbar discovery of another session's offer, clearing after viewing, atomic
+  freelancer selection and rejection of competing offers.
+- Bidirectional WebSocket messages, persisted history and rejoining a chat;
+  outsiders are refused over both REST and WebSocket.
+- `IN_PROGRESS → REVIEW → COMPLETED`, mutual reviews, separate public ratings
+  and duplicate/unfinished-review restrictions.
+- Profile edits, normalized skills and avatar upload/reload/removal in BYTEA.
+- Admin category create/rename/delete, in-use deletion restrictions, self-block
+  refusal, block/unblock and logout of an already connected blocked chat user.
+- Open-order/pending-proposal deletion, mobile dashboard, account switching and
+  403/404 UI states.
+
+The public tables' row counts were unchanged and the temporary schema was
+removed. This verifies the local integration. The README now covers setup,
+demo accounts, architecture and limitations, with screenshots from the current
+production build and demo seed in a separate temporary schema. MIT licensing is
+documented in the root LICENSE file. Deployment and the final layout/accessibility
+walkthrough remain to be done.
 
 ## Working rules
 

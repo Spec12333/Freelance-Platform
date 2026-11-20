@@ -1,5 +1,5 @@
 import type { FreelancerFilters as Filters } from "@/types/api";
-import { ChevronDownIcon, CloseIcon, RefreshIcon, SearchIcon } from "./ui/icons";
+import { ChevronDownIcon, CloseIcon, RefreshIcon, SearchIcon } from "@/components/ui/icons";
 
 type FreelancerFiltersProps = {
   search: string;

@@ -7,8 +7,8 @@ import { useAuthStore } from "@/store/auth";
 import type { ApiErrorBody, CreateProposalBody, UpdateProposalBody } from "@/types/api";
 import type { Proposal } from "@/types/models";
 import { formatMoney } from "@/utils/format";
-import StatusBadge from "./StatusBadge";
-import { BriefcaseIcon, MailIcon } from "./ui/icons";
+import StatusBadge from "@/components/ui/StatusBadge";
+import { BriefcaseIcon, MailIcon } from "@/components/ui/icons";
 
 type ProposalFormProps = {
   orderId: number;

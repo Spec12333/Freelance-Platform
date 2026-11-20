@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
 import type { Order } from "@/types/models";
 import { formatDate, formatMoney, formatRating } from "@/utils/format";
-import StatusBadge from "./StatusBadge";
-import { ArrowUpRightIcon, CalendarIcon, StarIcon } from "./ui/icons";
-import Avatar from "./Avatar";
+import StatusBadge from "@/components/ui/StatusBadge";
+import { ArrowUpRightIcon, CalendarIcon, StarIcon } from "@/components/ui/icons";
+import Avatar from "@/components/ui/Avatar";
 
 type OrderCardProps = {
   order: Order;

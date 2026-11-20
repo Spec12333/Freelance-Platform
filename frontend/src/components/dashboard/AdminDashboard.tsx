@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowUpRightIcon, BriefcaseIcon, LayersIcon, ShieldIcon, UserIcon } from "@/components/ui/icons";
 import type { AdminDashboard as AdminDashboardData } from "@/types/api";
 import type { Role } from "@/types/models";
-import DashboardStat from "./DashboardStat";
+import DashboardStat from "@/components/ui/DashboardStat";
 import OrderStatusSummary from "./OrderStatusSummary";
 
 const ROLE_LABELS: Record<Role, string> = { CLIENT: "Clients", FREELANCER: "Freelancers", ADMIN: "Administrators" };

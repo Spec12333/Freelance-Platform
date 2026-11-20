@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { Message } from "@/types/models";
 import { formatDate, formatDateTime, formatTime } from "@/utils/format";
-import { ChatIcon } from "./ui/icons";
-import Avatar from "./Avatar";
+import { ChatIcon } from "@/components/ui/icons";
+import Avatar from "@/components/ui/Avatar";
 
 type MessageListProps = {
   messages: Message[];

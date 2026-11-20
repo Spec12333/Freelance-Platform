@@ -10,8 +10,6 @@ import EditOrder from "./pages/EditOrder";
 import CreateOrder from "./pages/CreateOrder";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import Layout from "./components/layout/Layout";
-import AdminUsers from "./pages/admin/AdminUsers";
-import AdminCategories from "./pages/admin/AdminCategories";
 import { useAuthInit } from "./hooks/useAuthInit";
 import Spinner from "./components/ui/Spinner";
 import ErrorMessage from "./components/ui/ErrorMessage";
@@ -20,6 +18,8 @@ import ErrorMessage from "./components/ui/ErrorMessage";
 const Freelancers = lazy(() => import("./pages/Freelancers"));
 const MyProfile = lazy(() => import("./pages/MyProfile"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
+const AdminCategories = lazy(() => import("./pages/admin/AdminCategories"));
 
 // All <Route> definitions: public (Login, Register) and ProtectedRoute-wrapped ones inside Layout.
 export default function App() {
@@ -75,8 +75,8 @@ export default function App() {
 
             {/* Admin only */}
             <Route element={<ProtectedRoute roles={["ADMIN"]} />}>
-              <Route path="/admin/users" element={<AdminUsers />} />
-              <Route path="/admin/categories" element={<AdminCategories />} />
+              <Route path="/admin/users" element={<Suspense fallback={<div className="card p-10"><Spinner label="Opening user management…" /></div>}><AdminUsers /></Suspense>} />
+              <Route path="/admin/categories" element={<Suspense fallback={<div className="card p-10"><Spinner label="Opening category management…" /></div>}><AdminCategories /></Suspense>} />
             </Route>
           </Route>
         </Route>

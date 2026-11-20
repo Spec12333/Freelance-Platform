@@ -5,11 +5,11 @@ import { useMessages, useSendMessage } from "@/hooks/useMessages";
 import { useOrderChatSocket } from "@/hooks/useOrderChatSocket";
 import { useAuthStore } from "@/store/auth";
 import type { Order } from "@/types/models";
-import MessageInput from "./MessageInput";
-import MessageList from "./MessageList";
-import ErrorMessage from "./ui/ErrorMessage";
-import Spinner from "./ui/Spinner";
-import { ChatIcon, RefreshIcon } from "./ui/icons";
+import MessageInput from "@/components/chat/MessageInput";
+import MessageList from "@/components/chat/MessageList";
+import ErrorMessage from "@/components/ui/ErrorMessage";
+import Spinner from "@/components/ui/Spinner";
+import { ChatIcon, RefreshIcon } from "@/components/ui/icons";
 
 type OrderChatProps = {
   order: Order;

@@ -1,6 +1,6 @@
 import { useForm, type SubmitHandler } from "react-hook-form";
 import type { CreateMessageBody } from "@/types/api";
-import { ArrowUpRightIcon } from "./ui/icons";
+import { ArrowUpRightIcon } from "@/components/ui/icons";
 
 type MessageInputProps = {
   orderId: number;

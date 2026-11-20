@@ -11,9 +11,10 @@ import type {
 import api from "./client";
 import type { CurrentUser } from "@/types/models";
 
-export const getUsers = async (filters: AdminUserFilters) => {
+export const getUsers = async (filters: AdminUserFilters, signal?: AbortSignal) => {
   const result = await api.get<AdminUsersResponse>("/admin/users", {
     params: filters,
+    signal,
   });
   return result.data;
 };
@@ -25,10 +26,10 @@ export const blockUser = async (id: number, isBlocked: boolean) => {
   return result.data;
 };
 
-export const getAdminCategories = async (params?: PaginationParams) => {
+export const getAdminCategories = async (params?: PaginationParams, signal?: AbortSignal) => {
   const result = await api.get<Paginated<CategoryWithCount>>(
     "/admin/categories",
-    { params: params },
+    { params, signal },
   );
   return result.data;
 };

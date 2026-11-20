@@ -7,7 +7,7 @@ import {
   LayersIcon,
   RefreshIcon,
   SearchIcon,
-} from "./ui/icons";
+} from "@/components/ui/icons";
 
 type OrderFiltersProps = {
   search: string;

@@ -1,14 +1,14 @@
 import { Link } from "react-router-dom";
-import OrderCard from "@/components/OrderCard";
-import StatusBadge from "@/components/StatusBadge";
-import StarRating from "@/components/StarRating";
+import OrderCard from "@/components/orders/OrderCard";
+import StatusBadge from "@/components/ui/StatusBadge";
+import StarRating from "@/components/ui/StarRating";
 import EmptyState from "@/components/ui/EmptyState";
 import { ArrowUpRightIcon, BriefcaseIcon, ChatIcon, LayersIcon, StarIcon } from "@/components/ui/icons";
 import type { FreelancerDashboard as FreelancerDashboardData } from "@/types/api";
 import type { ProposalStatus } from "@/types/models";
 import { PROPOSAL_STATUS } from "@/utils/constants";
 import { formatRating } from "@/utils/format";
-import DashboardStat from "./DashboardStat";
+import DashboardStat from "@/components/ui/DashboardStat";
 
 type FreelancerDashboardProps = { data: FreelancerDashboardData; userId: number };
 
